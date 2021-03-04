@@ -1,3 +1,0 @@
-[dev]
-  framework = "parcel"
-  command = "npm run start"
