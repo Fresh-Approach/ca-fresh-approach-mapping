@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
-import { Router, Link, Redirect } from "@reach/router";
+import { Router, Redirect } from "@reach/router";
 import queryString from "query-string";
 import Button from "@material-ui/core/Button";
 import Card from "@material-ui/core/Card";
@@ -22,7 +22,16 @@ function App() {
   return (
     <div>
       <Router>
-        {accessToken && <CustomMap path="/" token={accessToken} />}
+        {accessToken && (
+          <CustomMap
+            path="/"
+            token={accessToken}
+            removeToken={() => {
+              localStorage.removeItem(GOOGLE_CLIENT_ACCESS_TOKEN);
+              setAccessToken(null);
+            }}
+          />
+        )}
         <GoogleRedirect path="dashboard" />
         <Login path="/" />
       </Router>

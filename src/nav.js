@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function Nav() {
+function Nav({ removeToken }) {
   const classes = useStyles();
 
   return (
@@ -25,12 +25,7 @@ function Nav() {
         <Typography variant="h6" className={classes.title}>
           Fresh Approach
         </Typography>
-        <Button
-          color="inherit"
-          onClick={() => {
-            console.log("SUFF");
-          }}
-        >
+        <Button color="inherit" onClick={removeToken}>
           Logout
         </Button>
       </Toolbar>
