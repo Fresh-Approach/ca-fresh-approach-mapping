@@ -71,9 +71,7 @@ const CustomMap = ({ token, removeToken }) => {
           attribution='&copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {console.log(items)}
         {items.map((item) => {
-          console.log(mapIcons[item.category]);
           return (
             <Marker
               key={item.id}

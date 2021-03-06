@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "parcel build src/index.html",
+    "build": "parcel src/index.html",
     "debug": "netlify dev --inspect",
     "netlify-dev": "netlify dev",
     "netlify-link": "netlify link",
