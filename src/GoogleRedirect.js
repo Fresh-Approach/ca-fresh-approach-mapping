@@ -1,4 +1,4 @@
-import queryString from "query-string";
+import { Redirect } from "@reach/router";
 
 function GoogleRedirect({ stashToken }) {
   useEffect(() => {
