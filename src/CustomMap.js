@@ -4,7 +4,7 @@ import Flare from "@material-ui/icons/Flare";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import Nav from "./nav";
 
-const URL = "/.netlify/functions/tester";
+const URL = "/.netlify/functions/locations";
 
 const LocationTypes = {
   FARM: "Farm",

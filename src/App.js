@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Router } from "@reach/router";
-import queryString from "query-string";
 
 import CustomMap from "./CustomMap";
 import Login from "./Login";
 import GoogleRedirect from "./GoogleRedirect";
-
-const GOOGLE_CLIENT_ACCESS_TOKEN = "google_client_access_token";
+import { GOOGLE_CLIENT_ACCESS_TOKEN } from "./utils";
 
 function App() {
   const [accessToken, setAccessToken] = useState();
@@ -29,16 +27,12 @@ function App() {
             }}
           />
         )}
+        <Login path="/" />
         <GoogleRedirect
           path="/redirect"
-          stashToken={() => {
-            localStorage.setItem(
-              GOOGLE_CLIENT_ACCESS_TOKEN,
-              queryString.parse(location.hash).access_token
-            );
-          }}
+          setAccessToken={setAccessToken}
+          token={accessToken}
         />
-        <Login path="/" />
       </Router>
     </div>
   );
