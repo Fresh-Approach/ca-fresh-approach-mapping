@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Flare from "@material-ui/icons/Flare";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -45,19 +45,26 @@ const position = [37.77191462466318, -122.4291251170002];
 
 const CustomMap = ({ token, removeToken }) => {
   const classes = useStyles();
-  const [error, setError] = useState(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [items, setItems] = useState([]);
+  const [distibutions, setDistributions] = useState([]);
+  const [purchases, setPurchases] = useState([]);
+  const [selectedLocationId, setSelectedLocationId] = useState(null);
 
   async function fetchData() {
-    const data = await fetch(URL, {
+    const { locations, distributions, purchases } = await fetch(URL, {
       headers: { Authorization: token },
     }).then((res) => res.json());
-
-    const rows = data.locations.filter(({ geocode }) => geocode);
-
-    return setItems(rows);
+    const rows = locations.filter(({ geocode }) => geocode);
+    setItems(rows);
+    setDistributions(distributions);
+    setPurchases(purchases);
   }
+
+  const selectedDistributions = useMemo(() => {
+    console.log("selected Districutions", selectedLocationId);
+
+    return "text";
+  }, [selectedLocationId]);
 
   useEffect(() => {
     fetchData();
@@ -66,6 +73,7 @@ const CustomMap = ({ token, removeToken }) => {
   return (
     <div>
       <Nav removeToken={removeToken} />
+      <pre>{selectedLocationId}</pre>
       <MapContainer center={position} zoom={8} className={classes.root}>
         <TileLayer
           attribution='&copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -77,6 +85,11 @@ const CustomMap = ({ token, removeToken }) => {
               key={item.id}
               position={item.geocode}
               icon={mapIcons[item.category]}
+              eventHandlers={{
+                click: () => {
+                  setSelectedLocationId(item.id);
+                },
+              }}
             >
               <Popup>
                 <strong>Name: </strong>
