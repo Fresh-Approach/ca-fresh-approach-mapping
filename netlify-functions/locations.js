@@ -9,7 +9,7 @@ const SheetNames = {
   FARM_PURCHASES: "Farm Purchases",
 };
 
-SPREADSHEET_ID = "14jPlnqsqNTeoQhA1eUWZXSBzajMEpkVpcXyJI_704FI";
+const { SPREADSHEET_ID } = process.env;
 
 function parseSpreadsheet([columns, ...values], hashLocation) {
   const locationHashByName = {};
