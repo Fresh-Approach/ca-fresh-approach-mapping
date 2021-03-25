@@ -40,7 +40,9 @@ function parseSpreadsheet([columns, ...values], hashLocation) {
 function matchDistributionNames(distributions, locationHash) {
   return distributions.map(({ hub, distributionSite, ...rest }) => ({
     hubId: (locationHash[hub] || {}).id,
+    hubGeo: (locationHash[hub] || {}).geocode,
     distributionSiteId: (locationHash[distributionSite] || {}).id,
+    distributionSiteGeo: (locationHash[distributionSite] || {}).geocode,
     hub,
     distributionSite,
     ...rest,
@@ -50,7 +52,9 @@ function matchDistributionNames(distributions, locationHash) {
 function matchPurchasesNames(purchases, locationHash) {
   return purchases.map(({ hubOrganization, farmName, ...rest }) => ({
     hubOrganizationId: (locationHash[hubOrganization] || {}).id,
+    hubOrganizationGeo: (locationHash[hubOrganization] || {}).geocode,
     farmNameId: (locationHash[farmName] || {}).id,
+    farmNameGeo: (locationHash[farmName] || {}).geocode,
     hubOrganization,
     farmName,
     ...rest,
