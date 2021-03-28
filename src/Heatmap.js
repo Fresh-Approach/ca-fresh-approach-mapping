@@ -10,7 +10,7 @@ export default function Heatmap({ items }) {
       return [...geocode, 0.9];
     });
 
-    const heat = L.heatLayer(points, { radius: 100, maxZoom: 8 }).addTo(map);
+    const heat = L.heatLayer(points, { radius: 100, maxZoom: 13 }).addTo(map);
     return () => {
       map.removeLayer(heat);
     };

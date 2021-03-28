@@ -26,14 +26,6 @@ const LocationTypes = {
   DISTRIBUTOR: "Distributor",
 };
 
-const LocationIcons = {
-  [LocationTypes.FARM]: "./spa-24px.svg",
-  [LocationTypes.AGGREGATING_FARM]: "./spa-24px.svg",
-  [LocationTypes.HUB]: "./flare-24px.svg",
-  [LocationTypes.FOOD_DISTRIBUTION_ORG]: "./store_mall_directory-24px.svg",
-  [LocationTypes.DISTRIBUTOR]: "./local_shipping-24px.svg",
-};
-
 const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
@@ -61,11 +53,17 @@ const CustomMap = ({ token, removeToken }) => {
   const [purchases, setPurchases] = useState([]);
   const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [isHeatmap, toggleHeatmap] = useState(false);
+  const [showPurchases, setShowPurchases] = useState(true);
+  const [showDistributions, setShowDistributions] = useState(true);
 
   async function fetchData() {
-    const { locations, distributions, purchases } = await fetch(URL, {
+    const { locations, distributions, purchases, error } = await fetch(URL, {
       headers: { Authorization: token },
     }).then((res) => res.json());
+
+    if (error) {
+      return removeToken();
+    }
 
     const rows = locations.filter(({ geocode }) => geocode);
     setItems(rows);
@@ -141,6 +139,10 @@ const CustomMap = ({ token, removeToken }) => {
             className={classes.paper}
             isHeatmap={isHeatmap}
             toggleHeatmap={toggleHeatmap}
+            showDistributions={showDistributions}
+            setShowDistributions={setShowDistributions}
+            showPurchases={showPurchases}
+            setShowPurchases={setShowPurchases}
           />
         </Grid>
         <Grid className={classes.map} item xs={9}>
@@ -180,23 +182,27 @@ const CustomMap = ({ token, removeToken }) => {
                     </Marker>
                   );
                 })}
-                {selectedDistributions.map(
-                  ({ hubGeo, distributionSiteGeo, boxes }) => (
+                {showDistributions &&
+                  selectedDistributions.map(
+                    ({ id, hubGeo, distributionSiteGeo, boxes }) => (
+                      <Polyline
+                        key={id}
+                        positions={[hubGeo, distributionSiteGeo]}
+                        pathOptions={{ color: distributionGradient(boxes) }}
+                      />
+                    )
+                  )}
+                {showPurchases &&
+                  selectedPurchases.map((purchases) => (
                     <Polyline
-                      positions={[hubGeo, distributionSiteGeo]}
-                      pathOptions={{ color: distributionGradient(boxes) }}
+                      key={purchases.id}
+                      positions={[
+                        purchases.hubOrganizationGeo,
+                        purchases.farmNameGeo,
+                      ]}
+                      pathOptions={{ color: purchaseGradient(800) }}
                     />
-                  )
-                )}
-                {selectedPurchases.map((purchases) => (
-                  <Polyline
-                    positions={[
-                      purchases.hubOrganizationGeo,
-                      purchases.farmNameGeo,
-                    ]}
-                    pathOptions={{ color: purchaseGradient(800) }}
-                  />
-                ))}
+                  ))}
               </Fragment>
             )}
           </MapContainer>

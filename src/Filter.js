@@ -19,7 +19,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Filter({ isHeatmap, toggleHeatmap }) {
+export default function Filter({
+  isHeatmap,
+  toggleHeatmap,
+  showPurchases,
+  setShowPurchases,
+  showDistributions,
+  setShowDistributions,
+}) {
   const classes = useStyles();
   const [checked, setChecked] = React.useState({
     bipoc: false,
@@ -37,11 +44,30 @@ export default function Filter({ isHeatmap, toggleHeatmap }) {
 
   return (
     <Paper className={classes.paper}>
-      <FormControl
-        component="fieldset"
-        component="fieldset"
-        className={classes.formControl}
-      >
+      <FormControl component="fieldset" className={classes.formControl}>
+        <FormLabel component="legend">Purchases and Distributions</FormLabel>
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="purchases"
+              onChange={() => setShowPurchases(!showPurchases)}
+              checked={showPurchases}
+            />
+          }
+          label="Purchases"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="distributions"
+              onChange={() => setShowDistributions(!showDistributions)}
+              checked={showDistributions}
+            />
+          }
+          label="Distributions"
+        />
+      </FormControl>
+      <FormControl component="fieldset" className={classes.formControl}>
         <FormLabel component="legend">Filter</FormLabel>
         <FormControlLabel
           control={<Checkbox name="bipoc" />}

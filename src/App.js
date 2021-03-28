@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Router } from "@reach/router";
 
-import CustomMap from "./CustomMap";
+import Map from "./Map";
 import Login from "./Login";
 import GoogleRedirect from "./GoogleRedirect";
 import { GOOGLE_CLIENT_ACCESS_TOKEN } from "./utils";
@@ -18,7 +18,7 @@ function App() {
     <div>
       <Router>
         {accessToken && (
-          <CustomMap
+          <Map
             path="/"
             token={accessToken}
             removeToken={() => {

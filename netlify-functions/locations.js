@@ -5,10 +5,6 @@ const camelCase = require("lodash.camelcase");
 
 const SHEETS_URI = "https://sheets.googleapis.com/v4/spreadsheets/";
 const { SPREADSHEET_ID } = process.env;
-/* Things to do:
-- Get locations into a single set of locations with types as an array of possible values.
-- Move circles to differentiate values.
-*/
 
 function getLocationHash([columns, ...values]) {
   const locationHashByName = {};
@@ -29,6 +25,12 @@ function getLocationHash([columns, ...values]) {
           newLocation[columnHeader] = row[i].split(", ");
         } else if (columnHeader === "category") {
           newLocation[columnHeader] = [row[i]];
+        } else if (
+          ["bipocOwned", "womanOwned", "certifiedOrganic"].includes(
+            columnHeader
+          )
+        ) {
+          newLocation[columnHeader] = row[i] === "TRUE";
         } else {
           newLocation[columnHeader] = row[i] === "" ? null : row[i];
         }
@@ -65,6 +67,9 @@ function matchDistributionNames(distributions, locationHash) {
     hubGeo: (locationHash[hub] || {}).geocode,
     distributionSiteId: (locationHash[distributionSite] || {}).id,
     distributionSiteGeo: (locationHash[distributionSite] || {}).geocode,
+    bipocOwned: (locationHash[distributionSite] || {}).bipocOwned,
+    womanOwned: (locationHash[distributionSite] || {}).womanOwned,
+    certifiedOrganic: (locationHash[distributionSite] || {}).certifiedOrganic,
     hub,
     distributionSite,
     ...rest,
@@ -77,6 +82,9 @@ function matchPurchasesNames(purchases, locationHash) {
     hubOrganizationGeo: (locationHash[hubOrganization] || {}).geocode,
     farmNameId: (locationHash[farmName] || {}).id,
     farmNameGeo: (locationHash[farmName] || {}).geocode,
+    bipocOwned: (locationHash[farmName] || {}).bipocOwned,
+    womanOwned: (locationHash[farmName] || {}).womanOwned,
+    certifiedOrganic: (locationHash[farmName] || {}).certifiedOrganic,
     hubOrganization,
     farmName,
     ...rest,
@@ -92,6 +100,13 @@ exports.handler = async function (event, context) {
         ).then((res) => res.json())
     )
   );
+
+  if (addresses.error) {
+    return {
+      statusCode: addresses.error.code,
+      body: JSON.stringify({ error: addresses.error.message }),
+    };
+  }
 
   const parsedLocationHash = getLocationHash(addresses.values);
 
