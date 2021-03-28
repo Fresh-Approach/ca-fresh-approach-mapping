@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, Fragment } from "react";
 import { makeStyles } from "@material-ui/core/styles";
-import Paper from "@material-ui/core/Paper";
 import Grid from "@material-ui/core/Grid";
 
 import {
@@ -15,6 +14,7 @@ import { scaleLinear } from "d3-scale";
 import Nav from "./Nav";
 import Filter from "./Filter";
 import Heatmap from "./Heatmap";
+import { getMapIcon } from "./utils";
 
 const URL = "/.netlify/functions/locations";
 
@@ -34,18 +34,6 @@ const LocationIcons = {
   [LocationTypes.DISTRIBUTOR]: "./local_shipping-24px.svg",
 };
 
-const mapIcons = Object.entries(LocationIcons).reduce(
-  (accumulator, [key, imageUrl]) => ({
-    ...accumulator,
-    [key]: L.divIcon({
-      iconUrl: imageUrl,
-      iconSize: [24, 24],
-      html: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" fill="blue"/></svg>`,
-    }),
-  }),
-  {}
-);
-
 const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
@@ -63,7 +51,7 @@ const useStyles = makeStyles((theme) => ({
     border: 0,
   },
 }));
-// initial location on map
+
 const position = [37.77191462466318, -122.4291251170002];
 
 const CustomMap = ({ token, removeToken }) => {
@@ -147,7 +135,6 @@ const CustomMap = ({ token, removeToken }) => {
   return (
     <div>
       <Nav removeToken={removeToken} />
-      {/* <pre>{selectedLocationId}</pre> */}
       <Grid container spacing={3}>
         <Grid item xs={3}>
           <Filter
@@ -172,7 +159,7 @@ const CustomMap = ({ token, removeToken }) => {
                       key={item.id}
                       className={classes.icon}
                       position={item.geocode}
-                      icon={mapIcons[item.category]}
+                      icon={getMapIcon(item.category)}
                       eventHandlers={{
                         click: () => {
                           setSelectedLocationId(item.id);
@@ -188,7 +175,7 @@ const CustomMap = ({ token, removeToken }) => {
                         {item.address}
                         <br />
                         <strong>Category: </strong>
-                        {item.category}
+                        {item.category.join(", ")}
                       </Popup>
                     </Marker>
                   );

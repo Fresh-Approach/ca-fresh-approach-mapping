@@ -3,38 +3,60 @@ require("dotenv").config();
 const fetch = require("node-fetch");
 const camelCase = require("lodash.camelcase");
 
-const SheetNames = {
-  ADDRESSES: "Addresses",
-  DISTRIBUTIONS: "Distributions",
-  FARM_PURCHASES: "Farm Purchases",
-};
-
+const SHEETS_URI = "https://sheets.googleapis.com/v4/spreadsheets/";
 const { SPREADSHEET_ID } = process.env;
+/* Things to do:
+- Get locations into a single set of locations with types as an array of possible values.
+- Move circles to differentiate values.
+*/
 
-function parseSpreadsheet([columns, ...values], hashLocation) {
+function getLocationHash([columns, ...values]) {
   const locationHashByName = {};
-  const locationList = [];
   const keys = columns.map((column) => camelCase(column));
   let index = 0;
 
-  // Find row name, hack, gotta formalize
+  // A while loop is used because we don't need to iterate through all rows.
   while (values[index] && values[index][1]) {
-    let obj = { id: index };
-    row = values[index];
+    const row = values[index];
+    const [category, locationName] = row;
 
-    keys.forEach((columnHeader, index) => {
-      if (columnHeader === "geocode" && row[index]) {
-        obj[columnHeader] = row[index].split(", ");
-      } else {
-        obj[columnHeader] = row[index] === "" ? null : row[index];
-      }
-    });
-
-    locationHashByName[obj.name] = obj;
-    locationList.push(obj);
+    if (locationHashByName[locationName]) {
+      locationHashByName[locationName].category.push(category);
+    } else {
+      const newLocation = { id: index };
+      keys.forEach((columnHeader, i) => {
+        if (columnHeader === "geocode" && row[i]) {
+          newLocation[columnHeader] = row[i].split(", ");
+        } else if (columnHeader === "category") {
+          newLocation[columnHeader] = [row[i]];
+        } else {
+          newLocation[columnHeader] = row[i] === "" ? null : row[i];
+        }
+      });
+      locationHashByName[locationName] = newLocation;
+    }
     index++;
   }
-  return [locationList, locationHashByName];
+
+  return locationHashByName;
+}
+
+function mapSheetsResponse([columns, ...values]) {
+  const resultList = [];
+  let index = 0;
+  const keys = columns.map((column) => camelCase(column));
+  while (values[index] && values[index][1]) {
+    const row = values[index];
+    const obj = {};
+    keys.forEach((columnHeader, i) => {
+      obj[columnHeader] = row[i] === "" ? null : row[i];
+    });
+
+    resultList.push(obj);
+    index++;
+  }
+
+  return resultList;
 }
 
 function matchDistributionNames(distributions, locationHash) {
@@ -62,40 +84,31 @@ function matchPurchasesNames(purchases, locationHash) {
 }
 
 exports.handler = async function (event, context) {
-  const URL = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Addresses!A:J`;
-  const DIST_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Distributions!A:J`;
-  const PURCHASE_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Purchases!A:J`;
-
-  const spreadsheet = await fetch(
-    `${URL}?access_token=${event.headers.authorization}`
-  ).then((res) => res.json());
-  const result = parseSpreadsheet(spreadsheet.values);
-
-  const distributions = await fetch(
-    `${DIST_URL}?access_token=${event.headers.authorization}`
-  ).then((res) => res.json());
-  const [parsedDistributionSpreadsheet] = parseSpreadsheet(
-    distributions.values
+  const [addresses, distributions, purchases] = await Promise.all(
+    ["Addresses", "Distributions", "Purchases"].map(
+      async (sheetName) =>
+        await fetch(
+          `${SHEETS_URI}${SPREADSHEET_ID}/values/${sheetName}!A:J?access_token=${event.headers.authorization}`
+        ).then((res) => res.json())
+    )
   );
+
+  const parsedLocationHash = getLocationHash(addresses.values);
+
   const newDistributions = matchDistributionNames(
-    parsedDistributionSpreadsheet,
-    result[1]
+    mapSheetsResponse(distributions.values),
+    parsedLocationHash
   );
 
-  const purchases = await fetch(
-    `${PURCHASE_URL}?access_token=${event.headers.authorization}`
-  ).then((res) => res.json());
-
-  const [parsedPurchaseSpreadsheet] = parseSpreadsheet(purchases.values);
   const newPurchases = matchPurchasesNames(
-    parsedPurchaseSpreadsheet,
-    result[1]
+    mapSheetsResponse(purchases.values),
+    parsedLocationHash
   );
 
   return {
     statusCode: 200,
     body: JSON.stringify({
-      locations: result[0],
+      locations: Object.values(parsedLocationHash),
       distributions: newDistributions,
       purchases: newPurchases,
     }),
