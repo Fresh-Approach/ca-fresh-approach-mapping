@@ -17,9 +17,7 @@ export function getMapIcon(locationTypes) {
     ${locationTypes
       .map((type, i) => {
         const size = (locationTypes.length - i) * 20;
-        return `<circle cx="${50}" cy="${50}" r="${size}" fill=${
-          LOCATION_COLORS[type]
-        } />`;
+        return `<circle cx="50" cy="50" r="${size}" fill=${LOCATION_COLORS[type]} />`;
       })
       .join()}
     </svg>`,
