@@ -36,9 +36,12 @@ function getLocationHash([columns, ...values]) {
           newLocation[columnHeader] = row[i] === "" ? null : row[i];
         }
       });
-      locationHashByName[locationName] = newLocation;
+      // Only add to hash if geocode is set.
+      if (newLocation.geocode) {
+        locationHashByName[locationName] = newLocation;
+      }
     }
-    index++;
+    index += 1;
   }
 
   return locationHashByName;
@@ -56,7 +59,7 @@ function mapSheetsResponse([columns, ...values]) {
     });
 
     resultList.push(obj);
-    index++;
+    index += 1;
   }
 
   return resultList;
@@ -90,30 +93,28 @@ function matchPurchasesNames(purchases, locationHash) {
         get(locationHash[farmName], "geocode") &&
         get(locationHash[hubOrganization], "geocode")
     )
-    .map(({ hubOrganization, farmName, ...rest }) => {
-      return {
-        hubOrganizationId: get(locationHash[hubOrganization], "id"),
-        hubOrganizationGeo: get(locationHash[hubOrganization], "geocode"),
-        farmNameId: get(locationHash[farmName], "id"),
-        farmNameGeo: get(locationHash[farmName], "geocode"),
-        bipocOwned: get(locationHash[farmName], "bipocOwned"),
-        womanOwned: get(locationHash[farmName], "womanOwned"),
-        certifiedOrganic: get(locationHash[farmName], "certifiedOrganic"),
-        hubOrganization,
-        farmName,
-        ...rest,
-      };
-    });
+    .map(({ hubOrganization, farmName, ...rest }) => ({
+      hubOrganizationId: get(locationHash[hubOrganization], "id"),
+      hubOrganizationGeo: get(locationHash[hubOrganization], "geocode"),
+      farmNameId: get(locationHash[farmName], "id"),
+      farmNameGeo: get(locationHash[farmName], "geocode"),
+      bipocOwned: get(locationHash[farmName], "bipocOwned"),
+      womanOwned: get(locationHash[farmName], "womanOwned"),
+      certifiedOrganic: get(locationHash[farmName], "certifiedOrganic"),
+      hubOrganization,
+      farmName,
+      ...rest,
+    }));
 }
 
-exports.handler = async function (event, context) {
+exports.handler = async function handler(event) {
   const [addresses, distributions, purchases] = await Promise.all(
-    ["Addresses", "Distributions", "Purchases"].map(
-      async (sheetName) =>
-        await fetch(
-          `${SHEETS_URI}${SPREADSHEET_ID}/values/${sheetName}!A:J?access_token=${event.headers.authorization}`
-        ).then((res) => res.json())
-    )
+    ["Addresses", "Distributions", "Purchases"].map(async (sheetName) => {
+      const data = await fetch(
+        `${SHEETS_URI}${SPREADSHEET_ID}/values/${sheetName}!A:J?access_token=${event.headers.authorization}`
+      );
+      return data.json();
+    })
   );
 
   if (addresses.error) {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, Fragment } from "react";
+import React, { useState, useMemo } from "react";
+import Proptypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import Grid from "@material-ui/core/Grid";
 
@@ -15,18 +16,9 @@ import Nav from "./Nav";
 import Filter from "./Filter";
 import Heatmap from "./Heatmap";
 import { getMapIcon } from "./utils";
+import useData from "./use-data";
 
-const URL = "/.netlify/functions/locations";
-
-const LocationTypes = {
-  FARM: "Farm",
-  AGGREGATING_FARM: "Aggregating Farm",
-  HUB: "Hub",
-  FOOD_DISTRIBUTION_ORG: "Food Distribution Org",
-  DISTRIBUTOR: "Distributor",
-};
-
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   root: {
     width: "100%",
     height: "80vh",
@@ -48,38 +40,25 @@ const position = [37.77191462466318, -122.4291251170002];
 
 const CustomMap = ({ token, removeToken }) => {
   const classes = useStyles();
-  const [items, setItems] = useState([]);
-  const [distributions, setDistributions] = useState([]);
-  const [purchases, setPurchases] = useState([]);
-  const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [isHeatmap, toggleHeatmap] = useState(false);
   const [showPurchases, setShowPurchases] = useState(true);
   const [showDistributions, setShowDistributions] = useState(true);
+  const [demographicsFilters, setDemographicsFilters] = useState({
+    bipocOwned: false,
+    womanOwned: false,
+    certifiedOrganic: false,
+  });
 
-  async function fetchData() {
-    const { locations, distributions, purchases, error } = await fetch(URL, {
-      headers: { Authorization: token },
-    }).then((res) => res.json());
-
-    if (error) {
-      return removeToken();
-    }
-
-    const rows = locations.filter(({ geocode }) => geocode);
-    setItems(rows);
-    setDistributions(distributions);
-    setPurchases(purchases);
-  }
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { locations, distributions, purchases } = useData({
+    token,
+    removeToken,
+  });
 
   const distributionGradient = useMemo(() => {
-    let min = 0,
-      max = 0;
+    let min = 0;
+    let max = 0;
 
-    for (let i = 0; i < distributions.length; i++) {
+    for (let i = 0; i < distributions.length; i += 1) {
       const { boxes } = distributions[i];
 
       if (boxes < min) {
@@ -95,10 +74,10 @@ const CustomMap = ({ token, removeToken }) => {
   }, [distributions]);
 
   const purchaseGradient = useMemo(() => {
-    let min = 0,
-      max = 0;
+    let min = 0;
+    let max = 0;
 
-    for (let i = 0; i < purchases.length; i++) {
+    for (let i = 0; i < purchases.length; i += 1) {
       const { june } = purchases[i];
       // Hack to see more stuff.
       const month = (june || "$0.00")
@@ -118,6 +97,26 @@ const CustomMap = ({ token, removeToken }) => {
     return scaleLinear().domain([min, max]).range(["pink", "purple"]);
   }, [purchases]);
 
+  const filteredLocations = useMemo(
+    () =>
+      locations.filter(
+        (location) =>
+          !Object.entries(demographicsFilters).every(
+            ([filter, filterValue]) => filterValue && !location[filter]
+          )
+      ),
+    [locations, demographicsFilters]
+  );
+
+  // const filteredDistributions = useMemo(() => {
+  //   console.log(locations);
+  // }, [distributions, demographicFilters]);
+
+  // const filteredPurchases = useMemo(() => {
+  //   console.log(locations);
+  // }, [purchases, demographicFilters]);
+  console.log("demographics filters", demographicsFilters);
+
   return (
     <div>
       <Nav removeToken={removeToken} />
@@ -131,6 +130,13 @@ const CustomMap = ({ token, removeToken }) => {
             setShowDistributions={setShowDistributions}
             showPurchases={showPurchases}
             setShowPurchases={setShowPurchases}
+            demographicsFilters={demographicsFilters}
+            handleDemographicsFilters={({ target: { name } }) => {
+              setDemographicsFilters({
+                ...demographicsFilters,
+                [name]: !demographicsFilters[name],
+              });
+            }}
           />
         </Grid>
         <Grid className={classes.map} item xs={9}>
@@ -140,21 +146,16 @@ const CustomMap = ({ token, removeToken }) => {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {isHeatmap ? (
-              <Heatmap items={items} />
+              <Heatmap locations={locations} />
             ) : (
-              <Fragment>
-                {items.map((item) => {
+              <>
+                {filteredLocations.map((item) => {
                   return (
                     <Marker
                       key={item.id}
                       className={classes.icon}
                       position={item.geocode}
                       icon={getMapIcon(item.category)}
-                      eventHandlers={{
-                        click: () => {
-                          setSelectedLocationId(item.id);
-                        },
-                      }}
                       style={{ border: 0 }}
                     >
                       <Popup>
@@ -181,23 +182,28 @@ const CustomMap = ({ token, removeToken }) => {
                     )
                   )}
                 {showPurchases &&
-                  purchases.map((purchases) => (
+                  purchases.map((purchase) => (
                     <Polyline
                       key={purchases.id}
                       positions={[
-                        purchases.hubOrganizationGeo,
-                        purchases.farmNameGeo,
+                        purchase.hubOrganizationGeo,
+                        purchase.farmNameGeo,
                       ]}
                       pathOptions={{ color: purchaseGradient(800) }}
                     />
                   ))}
-              </Fragment>
+              </>
             )}
           </MapContainer>
         </Grid>
       </Grid>
     </div>
   );
+};
+
+CustomMap.propTypes = {
+  token: Proptypes.string.isRequired,
+  removeToken: Proptypes.func.isRequired,
 };
 
 export default CustomMap;

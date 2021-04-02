@@ -1,12 +1,12 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
 
-export default function Heatmap({ items }) {
+export default function Heatmap({ locations }) {
   const map = useMap();
   useEffect(() => {
-    const points = items.map(({ geocode }) => {
+    const points = locations.map(({ geocode }) => {
       return [...geocode, 0.9];
     });
 
@@ -14,7 +14,7 @@ export default function Heatmap({ items }) {
     return () => {
       map.removeLayer(heat);
     };
-  }, [map]);
+  }, [locations, map]);
 
   return null;
 }

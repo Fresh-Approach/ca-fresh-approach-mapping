@@ -26,13 +26,10 @@ export default function Filter({
   setShowPurchases,
   showDistributions,
   setShowDistributions,
+  demographicsFilters,
+  handleDemographicsFilters,
 }) {
   const classes = useStyles();
-  const [checked, setChecked] = React.useState({
-    bipoc: false,
-    women: false,
-    organic: false,
-  });
 
   const [month, setMonth] = React.useState({
     may: true,
@@ -70,15 +67,33 @@ export default function Filter({
       <FormControl component="fieldset" className={classes.formControl}>
         <FormLabel component="legend">Filter</FormLabel>
         <FormControlLabel
-          control={<Checkbox name="bipoc" />}
+          control={
+            <Checkbox
+              name="bipocOwned"
+              checked={demographicsFilters.bipocOwned}
+              onChange={handleDemographicsFilters}
+            />
+          }
           label="Filter to BIPOC Owned"
         />
         <FormControlLabel
-          control={<Checkbox name="women" />}
+          control={
+            <Checkbox
+              name="womanOwned"
+              checked={demographicsFilters.womanOwned}
+              onChange={handleDemographicsFilters}
+            />
+          }
           label="Filter to Women Owned"
         />
         <FormControlLabel
-          control={<Checkbox name="organic" />}
+          control={
+            <Checkbox
+              name="certifiedOrganic"
+              checked={demographicsFilters.certifiedOrganic}
+              onChange={handleDemographicsFilters}
+            />
+          }
           label="Filter to Certified Organic"
         />
       </FormControl>
