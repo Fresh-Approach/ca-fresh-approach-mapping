@@ -75,18 +75,12 @@ const CustomMap = ({ token, removeToken }) => {
     fetchData();
   }, []);
 
-  const selectedDistributions = useMemo(() => {
-    return distributions.filter((distribution) => {
-      return distribution.hubGeo && distribution.distributionSiteGeo;
-    });
-  }, [selectedLocationId, distributions]);
-
   const distributionGradient = useMemo(() => {
     let min = 0,
       max = 0;
 
-    for (let i = 0; i < selectedDistributions.length; i++) {
-      const { boxes } = selectedDistributions[i];
+    for (let i = 0; i < distributions.length; i++) {
+      const { boxes } = distributions[i];
 
       if (boxes < min) {
         min = boxes;
@@ -98,20 +92,14 @@ const CustomMap = ({ token, removeToken }) => {
     }
 
     return scaleLinear().domain([min, max]).range(["red", "steelblue"]);
-  }, [selectedDistributions]);
-
-  const selectedPurchases = useMemo(() => {
-    return purchases.filter((purchases) => {
-      return purchases.hubOrganizationGeo && purchases.farmNameGeo;
-    });
-  }, [selectedLocationId, purchases]);
+  }, [distributions]);
 
   const purchaseGradient = useMemo(() => {
     let min = 0,
       max = 0;
 
-    for (let i = 0; i < selectedPurchases.length; i++) {
-      const { june } = selectedPurchases[i];
+    for (let i = 0; i < purchases.length; i++) {
+      const { june } = purchases[i];
       // Hack to see more stuff.
       const month = (june || "$0.00")
         .split("$")[1]
@@ -128,7 +116,7 @@ const CustomMap = ({ token, removeToken }) => {
     }
 
     return scaleLinear().domain([min, max]).range(["pink", "purple"]);
-  }, [selectedPurchases]);
+  }, [purchases]);
 
   return (
     <div>
@@ -183,7 +171,7 @@ const CustomMap = ({ token, removeToken }) => {
                   );
                 })}
                 {showDistributions &&
-                  selectedDistributions.map(
+                  distributions.map(
                     ({ id, hubGeo, distributionSiteGeo, boxes }) => (
                       <Polyline
                         key={id}
@@ -193,7 +181,7 @@ const CustomMap = ({ token, removeToken }) => {
                     )
                   )}
                 {showPurchases &&
-                  selectedPurchases.map((purchases) => (
+                  purchases.map((purchases) => (
                     <Polyline
                       key={purchases.id}
                       positions={[

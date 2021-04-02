@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const fetch = require("node-fetch");
 const camelCase = require("lodash.camelcase");
+const get = require("lodash.get");
 
 const SHEETS_URI = "https://sheets.googleapis.com/v4/spreadsheets/";
 const { SPREADSHEET_ID } = process.env;
@@ -62,33 +63,47 @@ function mapSheetsResponse([columns, ...values]) {
 }
 
 function matchDistributionNames(distributions, locationHash) {
-  return distributions.map(({ hub, distributionSite, ...rest }) => ({
-    hubId: (locationHash[hub] || {}).id,
-    hubGeo: (locationHash[hub] || {}).geocode,
-    distributionSiteId: (locationHash[distributionSite] || {}).id,
-    distributionSiteGeo: (locationHash[distributionSite] || {}).geocode,
-    bipocOwned: (locationHash[distributionSite] || {}).bipocOwned,
-    womanOwned: (locationHash[distributionSite] || {}).womanOwned,
-    certifiedOrganic: (locationHash[distributionSite] || {}).certifiedOrganic,
-    hub,
-    distributionSite,
-    ...rest,
-  }));
+  return distributions
+    .filter(
+      ({ hub, distributionSite }) =>
+        get(locationHash[hub], "geocode") &&
+        get(locationHash[distributionSite], "geocode")
+    )
+    .map(({ hub, distributionSite, ...rest }) => ({
+      hubId: get(locationHash[hub], "id"),
+      hubGeo: get(locationHash[hub], "geocode"),
+      distributionSiteId: get(locationHash[distributionSite], "id"),
+      distributionSiteGeo: get(locationHash[distributionSite], "geocode"),
+      bipocOwned: get(locationHash[distributionSite], "bipocOwned"),
+      womanOwned: get(locationHash[distributionSite], "womanOwned"),
+      certifiedOrganic: get(locationHash[distributionSite], "certifiedOrganic"),
+      hub,
+      distributionSite,
+      ...rest,
+    }));
 }
 
 function matchPurchasesNames(purchases, locationHash) {
-  return purchases.map(({ hubOrganization, farmName, ...rest }) => ({
-    hubOrganizationId: (locationHash[hubOrganization] || {}).id,
-    hubOrganizationGeo: (locationHash[hubOrganization] || {}).geocode,
-    farmNameId: (locationHash[farmName] || {}).id,
-    farmNameGeo: (locationHash[farmName] || {}).geocode,
-    bipocOwned: (locationHash[farmName] || {}).bipocOwned,
-    womanOwned: (locationHash[farmName] || {}).womanOwned,
-    certifiedOrganic: (locationHash[farmName] || {}).certifiedOrganic,
-    hubOrganization,
-    farmName,
-    ...rest,
-  }));
+  return purchases
+    .filter(
+      ({ farmName, hubOrganization }) =>
+        get(locationHash[farmName], "geocode") &&
+        get(locationHash[hubOrganization], "geocode")
+    )
+    .map(({ hubOrganization, farmName, ...rest }) => {
+      return {
+        hubOrganizationId: get(locationHash[hubOrganization], "id"),
+        hubOrganizationGeo: get(locationHash[hubOrganization], "geocode"),
+        farmNameId: get(locationHash[farmName], "id"),
+        farmNameGeo: get(locationHash[farmName], "geocode"),
+        bipocOwned: get(locationHash[farmName], "bipocOwned"),
+        womanOwned: get(locationHash[farmName], "womanOwned"),
+        certifiedOrganic: get(locationHash[farmName], "certifiedOrganic"),
+        hubOrganization,
+        farmName,
+        ...rest,
+      };
+    });
 }
 
 exports.handler = async function (event, context) {
