@@ -36,6 +36,15 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+function filterRecords(filters, records) {
+  return () =>
+    records.filter((record) =>
+      Object.keys(filters).every(
+        (filterName) => !filters[filterName] || record[filterName]
+      )
+    );
+}
+
 const position = [37.77191462466318, -122.4291251170002];
 
 const CustomMap = ({ token, removeToken }) => {
@@ -98,24 +107,19 @@ const CustomMap = ({ token, removeToken }) => {
   }, [purchases]);
 
   const filteredLocations = useMemo(
-    () =>
-      locations.filter(
-        (location) =>
-          !Object.entries(demographicsFilters).every(
-            ([filter, filterValue]) => filterValue && !location[filter]
-          )
-      ),
+    filterRecords(demographicsFilters, locations),
     [locations, demographicsFilters]
   );
 
-  // const filteredDistributions = useMemo(() => {
-  //   console.log(locations);
-  // }, [distributions, demographicFilters]);
+  const filteredDistributions = useMemo(
+    filterRecords(demographicsFilters, distributions),
+    [distributions, demographicsFilters]
+  );
 
-  // const filteredPurchases = useMemo(() => {
-  //   console.log(locations);
-  // }, [purchases, demographicFilters]);
-  console.log("demographics filters", demographicsFilters);
+  const filteredPurchases = useMemo(
+    filterRecords(demographicsFilters, purchases),
+    [purchases, demographicsFilters]
+  );
 
   return (
     <div>
@@ -149,30 +153,28 @@ const CustomMap = ({ token, removeToken }) => {
               <Heatmap locations={locations} />
             ) : (
               <>
-                {filteredLocations.map((item) => {
-                  return (
-                    <Marker
-                      key={item.id}
-                      className={classes.icon}
-                      position={item.geocode}
-                      icon={getMapIcon(item.category)}
-                      style={{ border: 0 }}
-                    >
-                      <Popup>
-                        <strong>Name: </strong>
-                        {item.name}
-                        <br />
-                        <strong>Address: </strong>
-                        {item.address}
-                        <br />
-                        <strong>Category: </strong>
-                        {item.category.join(", ")}
-                      </Popup>
-                    </Marker>
-                  );
-                })}
+                {filteredLocations.map((item) => (
+                  <Marker
+                    key={item.id}
+                    className={classes.icon}
+                    position={item.geocode}
+                    icon={getMapIcon(item.category)}
+                    style={{ border: 0 }}
+                  >
+                    <Popup onOpen={() => console.log(item)}>
+                      <strong>Name: </strong>
+                      {item.name}
+                      <br />
+                      <strong>Address: </strong>
+                      {item.address}
+                      <br />
+                      <strong>Category: </strong>
+                      {item.category.join(", ")}
+                    </Popup>
+                  </Marker>
+                ))}
                 {showDistributions &&
-                  distributions.map(
+                  filteredDistributions.map(
                     ({ id, hubGeo, distributionSiteGeo, boxes }) => (
                       <Polyline
                         key={id}
@@ -182,7 +184,7 @@ const CustomMap = ({ token, removeToken }) => {
                     )
                   )}
                 {showPurchases &&
-                  purchases.map((purchase) => (
+                  filteredPurchases.map((purchase) => (
                     <Polyline
                       key={purchases.id}
                       positions={[
