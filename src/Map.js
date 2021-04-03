@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react";
 import Proptypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import Grid from "@material-ui/core/Grid";
-
 import {
   MapContainer,
   TileLayer,
@@ -47,7 +46,7 @@ function filterRecords(filters, records) {
 
 const position = [37.77191462466318, -122.4291251170002];
 
-const CustomMap = ({ token, removeToken }) => {
+const Map = ({ token, removeToken }) => {
   const classes = useStyles();
   const [isHeatmap, toggleHeatmap] = useState(false);
   const [showPurchases, setShowPurchases] = useState(true);
@@ -203,9 +202,9 @@ const CustomMap = ({ token, removeToken }) => {
   );
 };
 
-CustomMap.propTypes = {
+Map.propTypes = {
   token: Proptypes.string.isRequired,
   removeToken: Proptypes.func.isRequired,
 };
 
-export default CustomMap;
+export default Map;
