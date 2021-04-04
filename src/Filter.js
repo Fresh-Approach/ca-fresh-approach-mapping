@@ -15,7 +15,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Paper from "@material-ui/core/Paper";
 import Select from "@material-ui/core/Select";
 import Switch from "@material-ui/core/Switch";
-import { makeStyles, useTheme } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 
 const MONTHS = ["May", "June", "July", "August", "September"];
 
@@ -49,15 +49,6 @@ const MenuProps = {
   },
 };
 
-function getStyles(name, personName, theme) {
-  return {
-    fontWeight:
-      personName.indexOf(name) === -1
-        ? theme.typography.fontWeightRegular
-        : theme.typography.fontWeightMedium,
-  };
-}
-
 function filterRecords(selectedHubs, filters, records) {
   return () =>
     records.filter((record) =>
@@ -74,20 +65,21 @@ export default function Filter({
   children,
 }) {
   const classes = useStyles();
-  const theme = useTheme();
 
   const [selectedHubs, setSelectedHubs] = useState([]);
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [isHeatmap, toggleHeatmap] = useState(false);
   const [showPurchases, setShowPurchases] = useState(true);
   const [showDistributions, setShowDistributions] = useState(true);
+  const [selectedHeatmapOption, setSelectedHeatmapOption] = useState(
+    "providers"
+  );
 
   const [demographicsFilters, setDemographicsFilters] = useState({
     bipocOwned: false,
     womanOwned: false,
     certifiedOrganic: false,
   });
-  const [value, handleChange] = useState({});
 
   const filteredLocations = useMemo(
     filterRecords(selectedHubs, demographicsFilters, locations),
@@ -245,8 +237,10 @@ export default function Filter({
               <RadioGroup
                 aria-label="heatmapvalues"
                 name="heatmap-values"
-                value={value}
-                onChange={handleChange}
+                value={selectedHeatmapOption}
+                onChange={({ target }) =>
+                  setSelectedHeatmapOption(target.value)
+                }
               >
                 <FormControlLabel
                   value="providers"
