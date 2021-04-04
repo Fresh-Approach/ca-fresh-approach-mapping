@@ -14,7 +14,7 @@ import { points, center as turfCenter } from "@turf/turf";
 import Nav from "./Nav";
 import Filter from "./Filter";
 import Heatmap from "./Heatmap";
-import { getMapIcon } from "./utils";
+import { getMapIcon, parsePrice, MONTHS } from "./utils";
 import useData from "./use-data";
 
 const useStyles = makeStyles(() => ({
@@ -62,30 +62,6 @@ const Map = ({ token, removeToken }) => {
     return scaleLinear().domain([min, max]).range(["red", "steelblue"]);
   }, [distributions]);
 
-  const purchaseGradient = useMemo(() => {
-    let min = 0;
-    let max = 0;
-
-    for (let i = 0; i < purchases.length; i += 1) {
-      const { june } = purchases[i];
-      // Hack to see more stuff.
-      const month = (june || "$0.00")
-        .split("$")[1]
-        .replace(",", "")
-        .replace(".00", "");
-
-      if (month < min) {
-        min = month;
-      }
-
-      if (month > max) {
-        max = month;
-      }
-    }
-
-    return scaleLinear().domain([min, max]).range(["pink", "purple"]);
-  }, [purchases]);
-
   // todo delete
   const filteredDistributions = useMemo(() => distributions, [distributions]);
 
@@ -99,6 +75,14 @@ const Map = ({ token, removeToken }) => {
   );
 
   const center = turfCenter(features);
+  function getPurchaseAmount(purchase) {
+    let total = 0;
+    MONTHS.forEach((month) => {
+      total += parsePrice(purchase[month.toLowerCase()]);
+    });
+
+    return total;
+  }
 
   return (
     <div>
@@ -114,6 +98,7 @@ const Map = ({ token, removeToken }) => {
           isHeatmap,
           showPurchases,
           showDistributions,
+          purchaseGradient,
         }) => (
           <MapContainer
             center={center.geometry.coordinates}
@@ -136,19 +121,39 @@ const Map = ({ token, removeToken }) => {
                     icon={getMapIcon(item.category)}
                     style={{ border: 0 }}
                   >
-                    <Popup onOpen={() => {}}>
-                      <strong>Name: </strong>
-                      {item.name}
-                      <br />
-                      <strong>Address: </strong>
-                      {item.address}
-                      <br />
-                      <strong>Category: </strong>
-                      {item.category.join(", ")}
+                    <Popup onOpen={() => console.log(item)}>
+                      <div style={{ display: "flex" }}>
+                        {item.locationImage && (
+                          <div style={{ width: 120, paddingRight: 30 }}>
+                            <img
+                              style={{ width: "100%" }}
+                              src={item.locationImage}
+                              alt=""
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <strong>Name: </strong>
+                          {item.name}
+                          <br />
+                          {item.description && (
+                            <>
+                              <strong>Description: </strong>
+                              <span>{item.description}</span>
+                              <br />
+                            </>
+                          )}
+                          <strong>Address: </strong>
+                          {item.address}
+                          <br />
+                          <strong>Category: </strong>
+                          {item.category.join(", ")}
+                        </div>
+                      </div>
                     </Popup>
                   </Marker>
                 ))}
-                {showDistributions &&
+                {/* {showDistributions &&
                   filteredDistributions.map(
                     ({ id, hubGeo, distributionSiteGeo, boxes }) => (
                       <Polyline
@@ -157,7 +162,7 @@ const Map = ({ token, removeToken }) => {
                         pathOptions={{ color: distributionGradient(boxes) }}
                       />
                     )
-                  )}
+                  )} */}
                 {showPurchases &&
                   filteredPurchases.map((purchase) => (
                     <Polyline
@@ -166,7 +171,9 @@ const Map = ({ token, removeToken }) => {
                         purchase.hubOrganizationGeo,
                         purchase.farmNameGeo,
                       ]}
-                      pathOptions={{ color: purchaseGradient(800) }}
+                      pathOptions={{
+                        color: purchaseGradient(getPurchaseAmount(purchase)),
+                      }}
                     />
                   ))}
               </>

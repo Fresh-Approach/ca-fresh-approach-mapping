@@ -111,7 +111,7 @@ exports.handler = async function handler(event) {
   const [addresses, distributions, purchases] = await Promise.all(
     ["Addresses", "Distributions", "Purchases"].map(async (sheetName) => {
       const data = await fetch(
-        `${SHEETS_URI}${SPREADSHEET_ID}/values/${sheetName}!A:J?access_token=${event.headers.authorization}`
+        `${SHEETS_URI}${SPREADSHEET_ID}/values/${sheetName}!A:L?access_token=${event.headers.authorization}`
       );
       return data.json();
     })
