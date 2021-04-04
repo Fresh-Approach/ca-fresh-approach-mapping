@@ -24,3 +24,7 @@ export function getMapIcon(locationTypes) {
     </svg>`,
   });
 }
+
+export function parsePrice(price) {
+  return parseFloat((price || "$0.00").split("$")[1].replace(",", ""));
+}

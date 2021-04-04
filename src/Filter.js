@@ -16,6 +16,9 @@ import Paper from "@material-ui/core/Paper";
 import Select from "@material-ui/core/Select";
 import Switch from "@material-ui/core/Switch";
 import { makeStyles } from "@material-ui/core/styles";
+import { scaleLinear } from "d3-scale";
+
+import { parsePrice } from "./utils";
 
 const MONTHS = ["May", "June", "July", "August", "September"];
 
@@ -61,7 +64,7 @@ function filterRecords(selectedHubs, filters, records) {
 export default function Filter({
   locations,
   distributions,
-  providers,
+  purchases,
   children,
 }) {
   const classes = useStyles();
@@ -100,6 +103,30 @@ export default function Filter({
       [name]: !demographicsFilters[name],
     });
   }
+
+  const purchaseGradient = useMemo(() => {
+    let min = 0;
+    let max = 0;
+
+    for (let i = 0; i < purchases.length; i += 1) {
+      let month = 0;
+
+      MONTHS.forEach((monthValue) => {
+        const monthPrice = parsePrice(purchases[i][monthValue.toLowerCase()]);
+        month += monthPrice;
+      });
+
+      if (month < min) {
+        min = month;
+      }
+
+      if (month > max) {
+        max = month;
+      }
+    }
+
+    return scaleLinear().domain([min, max]).range(["pink", "purple"]);
+  }, [purchases]);
 
   return (
     <Grid container>
@@ -265,6 +292,7 @@ export default function Filter({
           selectedHubs,
           showPurchases,
           showDistributions,
+          purchaseGradient,
         })}
       </Grid>
     </Grid>
