@@ -9,6 +9,7 @@ import {
   Polyline,
 } from "react-leaflet";
 import { scaleLinear } from "d3-scale";
+import { points, center as turfCenter } from "@turf/turf";
 
 import Nav from "./Nav";
 import Filter from "./Filter";
@@ -33,8 +34,6 @@ const useStyles = makeStyles(() => ({
     border: 0,
   },
 }));
-
-const position = [37.77191462466318, -122.4291251170002];
 
 const Map = ({ token, removeToken }) => {
   const classes = useStyles();
@@ -93,6 +92,14 @@ const Map = ({ token, removeToken }) => {
   // todo delete
   const filteredPurchases = useMemo(() => purchases, [purchases]);
 
+  const features = points(
+    locations.length
+      ? locations.map((l) => l.geocode.map((coord) => parseInt(coord, 10)))
+      : [[37.77191462466318, -122.4291251170002]] // hardcoded fallback
+  );
+
+  const center = turfCenter(features);
+
   return (
     <div>
       <Nav removeToken={removeToken} />
@@ -108,7 +115,11 @@ const Map = ({ token, removeToken }) => {
           showPurchases,
           showDistributions,
         }) => (
-          <MapContainer center={position} zoom={8} className={classes.root}>
+          <MapContainer
+            center={center.geometry.coordinates}
+            zoom={8}
+            className={classes.root}
+          >
             <TileLayer
               attribution='&copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
