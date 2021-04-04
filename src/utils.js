@@ -13,6 +13,7 @@ Gets map icons using location types.
 */
 export function getMapIcon(locationTypes) {
   return L.divIcon({
+    iconSize: (20, 20),
     html: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
     ${locationTypes
       .map((type, i) => {
