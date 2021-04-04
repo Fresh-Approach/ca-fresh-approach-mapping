@@ -4,6 +4,7 @@ import Chip from "@material-ui/core/Chip";
 import Grid from "@material-ui/core/Grid";
 import FormControl from "@material-ui/core/FormControl";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
+import ListItemText from "@material-ui/core/ListItemText";
 import FormGroup from "@material-ui/core/FormGroup";
 import FormLabel from "@material-ui/core/FormLabel";
 import Input from "@material-ui/core/Input";
@@ -203,15 +204,24 @@ export default function Filter({
               />
             </FormGroup>
           </FormControl>
-          <FormControl component="fieldset">
-            <FormLabel component="legend">Filter Hubs</FormLabel>
+          <FormControl style={{ width: 100 }} component="fieldset">
             <InputLabel id="demo-mutiple-chip-label">Filter Hubs</InputLabel>
             <Select
               labelId="demo-mutiple-chip-label"
               id="demo-mutiple-chip"
               multiple
               value={selectedHubs}
-              onChange={() => setSelectedHubs}
+              onChange={({
+                target: {
+                  value: [id],
+                },
+              }) =>
+                selectedHubs.includes(id)
+                  ? setSelectedHubs(
+                      selectedHubs.filter((hubId) => hubId !== id)
+                    )
+                  : setSelectedHubs([...selectedHubs, id])
+              }
               input={<Input id="select-multiple-chip" />}
               renderValue={(selected) => (
                 <div className={classes.chips}>
@@ -222,13 +232,10 @@ export default function Filter({
               )}
               MenuProps={MenuProps}
             >
-              {hubs.map((hub) => (
-                <MenuItem
-                  key={hub}
-                  className={getStyles(hub, selectedHubs, theme)}
-                  value={hub}
-                >
-                  {hub}
+              {hubs.map(({ id, name }) => (
+                <MenuItem key={id} value={id}>
+                  <Checkbox checked={selectedHubs.includes(id)} />
+                  <ListItemText primary={name} />
                 </MenuItem>
               ))}
             </Select>
