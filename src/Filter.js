@@ -17,6 +17,8 @@ import Select from "@material-ui/core/Select";
 import Switch from "@material-ui/core/Switch";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 
+const MONTHS = ["May", "June", "July", "August", "September"];
+
 const useStyles = makeStyles((theme) => ({
   paper: {
     backgroundColor: "lightgray",
@@ -24,6 +26,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(2),
   },
   formControl: {
+    width: "100%",
     paddingBottom: theme.spacing(2),
   },
   map: {
@@ -74,6 +77,7 @@ export default function Filter({
   const theme = useTheme();
 
   const [selectedHubs, setSelectedHubs] = useState([]);
+  const [selectedMonths, setSelectedMonths] = useState([]);
   const [isHeatmap, toggleHeatmap] = useState(false);
   const [showPurchases, setShowPurchases] = useState(true);
   const [showDistributions, setShowDistributions] = useState(true);
@@ -84,14 +88,6 @@ export default function Filter({
     certifiedOrganic: false,
   });
   const [value, handleChange] = useState({});
-
-  const [month, setMonth] = useState({
-    may: true,
-    june: true,
-    july: true,
-    august: true,
-    september: true,
-  });
 
   const filteredLocations = useMemo(
     filterRecords(selectedHubs, demographicsFilters, locations),
@@ -117,6 +113,34 @@ export default function Filter({
     <Grid container>
       <Grid item xs={3}>
         <Paper className={classes.paper}>
+          <FormControl component="fieldset" className={classes.formControl}>
+            <InputLabel id="demo-mutiple-chip-label">Filter Hubs</InputLabel>
+            <Select
+              labelId="demo-mutiple-chip-label"
+              id="demo-mutiple-chip"
+              multiple
+              value={selectedHubs}
+              onChange={(event) => {
+                setSelectedHubs(event.target.value);
+              }}
+              input={<Input id="select-multiple-chip" />}
+              renderValue={(selected) => (
+                <div className={classes.chips}>
+                  {selected.map((name) => (
+                    <Chip key={name} label={name} className={classes.chip} />
+                  ))}
+                </div>
+              )}
+              MenuProps={MenuProps}
+            >
+              {hubs.map(({ id, name }) => (
+                <MenuItem key={id} value={name}>
+                  <Checkbox checked={selectedHubs.includes(name)} />
+                  <ListItemText primary={name} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormLabel component="legend">
               Purchases and Distributions
@@ -175,23 +199,35 @@ export default function Filter({
               label="Filter to Certified Organic"
             />
           </FormControl>
-          <FormControl className={classes.formControl}>
-            <FormLabel component="legend">Months</FormLabel>
-            <FormControlLabel
-              control={<Checkbox name="may" value={month.may} />}
-              label="May"
-            />
-            <FormControlLabel control={<Checkbox name="june" />} label="June" />
-            <FormControlLabel control={<Checkbox name="july" />} label="July" />
-            <FormControlLabel
-              control={<Checkbox name="august" />}
-              label="August"
-            />
-            <FormControlLabel
-              control={<Checkbox name="september" />}
-              label="September"
-            />
+          <FormControl component="fieldset" className={classes.formControl}>
+            <InputLabel id="month-select">Months</InputLabel>
+            <Select
+              labelId="month-select"
+              id="month-chip"
+              multiple
+              value={selectedMonths}
+              onChange={(event) => {
+                setSelectedMonths(event.target.value);
+              }}
+              input={<Input id="select-month-chip" />}
+              renderValue={(selected) => (
+                <div className={classes.chips}>
+                  {selected.map((name) => (
+                    <Chip key={name} label={name} className={classes.chip} />
+                  ))}
+                </div>
+              )}
+              MenuProps={MenuProps}
+            >
+              {MONTHS.map((month) => (
+                <MenuItem key={month} value={month}>
+                  <Checkbox checked={selectedMonths.includes(month)} />
+                  <ListItemText primary={month} />
+                </MenuItem>
+              ))}
+            </Select>
           </FormControl>
+
           <FormControl component="fieldset">
             <FormLabel component="legend">Map Display</FormLabel>
             <FormGroup>
@@ -205,63 +241,25 @@ export default function Filter({
                 }
                 label="Use Heatmap"
               />
-              <FormControl component="fieldset">
-                <FormLabel component="legend">Heatmap Values</FormLabel>
-                <RadioGroup
-                  aria-label="heatmapvalues"
-                  name="heatmap-values"
-                  value={value}
-                  onChange={handleChange}
-                >
-                  <FormControlLabel
-                    value="providers"
-                    control={<Radio />}
-                    label="Funds to Providers"
-                  />
-                  <FormControlLabel
-                    value="distributors"
-                    control={<Radio />}
-                    label="Food to Distributors"
-                  />
-                </RadioGroup>
-              </FormControl>
+              <FormLabel component="legend">Heatmap Values</FormLabel>
+              <RadioGroup
+                aria-label="heatmapvalues"
+                name="heatmap-values"
+                value={value}
+                onChange={handleChange}
+              >
+                <FormControlLabel
+                  value="providers"
+                  control={<Radio />}
+                  label="Funds to Providers"
+                />
+                <FormControlLabel
+                  value="distributors"
+                  control={<Radio />}
+                  label="Food to Distributors"
+                />
+              </RadioGroup>
             </FormGroup>
-          </FormControl>
-          <FormControl style={{ width: 100 }} component="fieldset">
-            <InputLabel id="demo-mutiple-chip-label">Filter Hubs</InputLabel>
-            <Select
-              labelId="demo-mutiple-chip-label"
-              id="demo-mutiple-chip"
-              multiple
-              value={selectedHubs}
-              onChange={({
-                target: {
-                  value: [id],
-                },
-              }) =>
-                selectedHubs.includes(id)
-                  ? setSelectedHubs(
-                      selectedHubs.filter((hubId) => hubId !== id)
-                    )
-                  : setSelectedHubs([...selectedHubs, id])
-              }
-              input={<Input id="select-multiple-chip" />}
-              renderValue={(selected) => (
-                <div className={classes.chips}>
-                  {selected.map((value) => (
-                    <Chip key={value} label={value} className={classes.chip} />
-                  ))}
-                </div>
-              )}
-              MenuProps={MenuProps}
-            >
-              {hubs.map(({ id, name }) => (
-                <MenuItem key={id} value={id}>
-                  <Checkbox checked={selectedHubs.includes(id)} />
-                  <ListItemText primary={name} />
-                </MenuItem>
-              ))}
-            </Select>
           </FormControl>
         </Paper>
       </Grid>
