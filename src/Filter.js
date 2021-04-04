@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import Checkbox from "@material-ui/core/Checkbox";
 import Chip from "@material-ui/core/Chip";
 import Grid from "@material-ui/core/Grid";
@@ -49,7 +50,7 @@ const MenuProps = {
   },
 };
 
-function filterRecords(selectedHubs, filters, records) {
+function filterRecords(filters, records) {
   return () =>
     records.filter((record) =>
       Object.keys(filters).every(
@@ -58,12 +59,7 @@ function filterRecords(selectedHubs, filters, records) {
     );
 }
 
-export default function Filter({
-  locations,
-  distributions,
-  providers,
-  children,
-}) {
+export default function Filter({ locations, children }) {
   const classes = useStyles();
 
   const [selectedHubs, setSelectedHubs] = useState([]);
@@ -82,7 +78,7 @@ export default function Filter({
   });
 
   const filteredLocations = useMemo(
-    filterRecords(selectedHubs, demographicsFilters, locations),
+    filterRecords(demographicsFilters, locations),
     [locations, demographicsFilters]
   );
 
@@ -270,3 +266,8 @@ export default function Filter({
     </Grid>
   );
 }
+
+Filter.propTypes = {
+  locations: PropTypes.arrayOf(PropTypes.object).isRequired,
+  children: PropTypes.func.isRequired,
+};

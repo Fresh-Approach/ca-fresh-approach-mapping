@@ -6,9 +6,7 @@ import "leaflet.heat";
 export default function Heatmap({ locations }) {
   const map = useMap();
   useEffect(() => {
-    const points = locations.map(({ geocode }) => {
-      return [...geocode, 0.9];
-    });
+    const points = locations.map(({ geocode }) => [...geocode, 0.9]);
 
     const heat = L.heatLayer(points, { radius: 100, maxZoom: 13 }).addTo(map);
     return () => {
