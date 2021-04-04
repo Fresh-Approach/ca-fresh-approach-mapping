@@ -37,5 +37,5 @@ function Nav({ removeToken }) {
 export default Nav;
 
 Nav.propTypes = {
-  removeToken: PropTypes.func,
+  removeToken: PropTypes.func.isRequired,
 };
