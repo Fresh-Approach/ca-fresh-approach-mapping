@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import Proptypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
-import Grid from "@material-ui/core/Grid";
 import {
   MapContainer,
   TileLayer,
@@ -35,27 +34,10 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-function filterRecords(filters, records) {
-  return () =>
-    records.filter((record) =>
-      Object.keys(filters).every(
-        (filterName) => !filters[filterName] || record[filterName]
-      )
-    );
-}
-
 const position = [37.77191462466318, -122.4291251170002];
 
 const Map = ({ token, removeToken }) => {
   const classes = useStyles();
-  const [isHeatmap, toggleHeatmap] = useState(false);
-  const [showPurchases, setShowPurchases] = useState(true);
-  const [showDistributions, setShowDistributions] = useState(true);
-  const [demographicsFilters, setDemographicsFilters] = useState({
-    bipocOwned: false,
-    womanOwned: false,
-    certifiedOrganic: false,
-  });
 
   const { locations, distributions, purchases } = useData({
     token,
@@ -105,44 +87,27 @@ const Map = ({ token, removeToken }) => {
     return scaleLinear().domain([min, max]).range(["pink", "purple"]);
   }, [purchases]);
 
-  const filteredLocations = useMemo(
-    filterRecords(demographicsFilters, locations),
-    [locations, demographicsFilters]
-  );
+  // todo delete
+  const filteredDistributions = useMemo(() => distributions, [distributions]);
 
-  const filteredDistributions = useMemo(
-    filterRecords(demographicsFilters, distributions),
-    [distributions, demographicsFilters]
-  );
-
-  const filteredPurchases = useMemo(
-    filterRecords(demographicsFilters, purchases),
-    [purchases, demographicsFilters]
-  );
+  // todo delete
+  const filteredPurchases = useMemo(() => purchases, [purchases]);
 
   return (
     <div>
       <Nav removeToken={removeToken} />
-      <Grid container spacing={3}>
-        <Grid item xs={3}>
-          <Filter
-            className={classes.paper}
-            isHeatmap={isHeatmap}
-            toggleHeatmap={toggleHeatmap}
-            showDistributions={showDistributions}
-            setShowDistributions={setShowDistributions}
-            showPurchases={showPurchases}
-            setShowPurchases={setShowPurchases}
-            demographicsFilters={demographicsFilters}
-            handleDemographicsFilters={({ target: { name } }) => {
-              setDemographicsFilters({
-                ...demographicsFilters,
-                [name]: !demographicsFilters[name],
-              });
-            }}
-          />
-        </Grid>
-        <Grid className={classes.map} item xs={9}>
+      <Filter
+        locations={locations}
+        distributions={distributions}
+        purchases={purchases}
+        className={classes.paper}
+      >
+        {({
+          filteredLocations,
+          isHeatmap,
+          showPurchases,
+          showDistributions,
+        }) => (
           <MapContainer center={position} zoom={8} className={classes.root}>
             <TileLayer
               attribution='&copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -196,8 +161,8 @@ const Map = ({ token, removeToken }) => {
               </>
             )}
           </MapContainer>
-        </Grid>
-      </Grid>
+        )}
+      </Filter>
     </div>
   );
 };

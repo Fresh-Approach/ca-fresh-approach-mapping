@@ -1,12 +1,18 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import Checkbox from "@material-ui/core/Checkbox";
+import Chip from "@material-ui/core/Chip";
+import Grid from "@material-ui/core/Grid";
 import FormControl from "@material-ui/core/FormControl";
-import FormLabel from "@material-ui/core/FormLabel";
-import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
+import FormGroup from "@material-ui/core/FormGroup";
+import FormLabel from "@material-ui/core/FormLabel";
+import Input from "@material-ui/core/Input";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
 import Paper from "@material-ui/core/Paper";
+import Select from "@material-ui/core/Select";
 import Switch from "@material-ui/core/Switch";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -17,21 +23,65 @@ const useStyles = makeStyles((theme) => ({
   formControl: {
     paddingBottom: theme.spacing(2),
   },
+  map: {
+    "& .leaflet-marker-icon": {
+      border: 0,
+      backgroundColor: "transparent",
+    },
+    border: 0,
+  },
 }));
 
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+function getStyles(name, personName, theme) {
+  return {
+    fontWeight:
+      personName.indexOf(name) === -1
+        ? theme.typography.fontWeightRegular
+        : theme.typography.fontWeightMedium,
+  };
+}
+
+function filterRecords(selectedHubs, filters, records) {
+  return () =>
+    records.filter((record) =>
+      Object.keys(filters).every(
+        (filterName) => !filters[filterName] || record[filterName]
+      )
+    );
+}
+
 export default function Filter({
-  isHeatmap,
-  toggleHeatmap,
-  showPurchases,
-  setShowPurchases,
-  showDistributions,
-  setShowDistributions,
-  demographicsFilters,
-  handleDemographicsFilters,
+  locations,
+  distributions,
+  providers,
+  children,
 }) {
   const classes = useStyles();
+  const theme = useTheme();
 
-  const [month, setMonth] = React.useState({
+  const [selectedHubs, setSelectedHubs] = useState([]);
+  const [isHeatmap, toggleHeatmap] = useState(false);
+  const [showPurchases, setShowPurchases] = useState(true);
+  const [showDistributions, setShowDistributions] = useState(true);
+
+  const [demographicsFilters, setDemographicsFilters] = useState({
+    bipocOwned: false,
+    womanOwned: false,
+    certifiedOrganic: false,
+  });
+
+  const [month, setMonth] = useState({
     may: true,
     june: true,
     july: true,
@@ -39,93 +89,162 @@ export default function Filter({
     september: true,
   });
 
+  const filteredLocations = useMemo(
+    filterRecords(selectedHubs, demographicsFilters, locations),
+    [locations, demographicsFilters]
+  );
+
+  const hubs = useMemo(
+    () =>
+      locations
+        ? locations.filter(({ category }) => category.includes("Hub"))
+        : [],
+    [locations]
+  );
+
+  function handleDemographicsFilters({ target: { name } }) {
+    setDemographicsFilters({
+      ...demographicsFilters,
+      [name]: !demographicsFilters[name],
+    });
+  }
+
   return (
-    <Paper className={classes.paper}>
-      <FormControl component="fieldset" className={classes.formControl}>
-        <FormLabel component="legend">Purchases and Distributions</FormLabel>
-        <FormControlLabel
-          control={
-            <Checkbox
-              name="purchases"
-              onChange={() => setShowPurchases(!showPurchases)}
-              checked={showPurchases}
+    <Grid container>
+      <Grid item xs={3}>
+        <Paper className={classes.paper}>
+          <FormControl component="fieldset" className={classes.formControl}>
+            <FormLabel component="legend">
+              Purchases and Distributions
+            </FormLabel>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="purchases"
+                  onChange={() => setShowPurchases(!showPurchases)}
+                  checked={showPurchases}
+                />
+              }
+              label="Purchases"
             />
-          }
-          label="Purchases"
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              name="distributions"
-              onChange={() => setShowDistributions(!showDistributions)}
-              checked={showDistributions}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="distributions"
+                  onChange={() => setShowDistributions(!showDistributions)}
+                  checked={showDistributions}
+                />
+              }
+              label="Distributions"
             />
-          }
-          label="Distributions"
-        />
-      </FormControl>
-      <FormControl component="fieldset" className={classes.formControl}>
-        <FormLabel component="legend">Filter</FormLabel>
-        <FormControlLabel
-          control={
-            <Checkbox
-              name="bipocOwned"
-              checked={demographicsFilters.bipocOwned}
-              onChange={handleDemographicsFilters}
+          </FormControl>
+          <FormControl component="fieldset" className={classes.formControl}>
+            <FormLabel component="legend">Filter Providers</FormLabel>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="bipocOwned"
+                  checked={demographicsFilters.bipocOwned}
+                  onChange={handleDemographicsFilters}
+                />
+              }
+              label="Filter to BIPOC Owned"
             />
-          }
-          label="Filter to BIPOC Owned"
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              name="womanOwned"
-              checked={demographicsFilters.womanOwned}
-              onChange={handleDemographicsFilters}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="womanOwned"
+                  checked={demographicsFilters.womanOwned}
+                  onChange={handleDemographicsFilters}
+                />
+              }
+              label="Filter to Women Owned"
             />
-          }
-          label="Filter to Women Owned"
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              name="certifiedOrganic"
-              checked={demographicsFilters.certifiedOrganic}
-              onChange={handleDemographicsFilters}
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="certifiedOrganic"
+                  checked={demographicsFilters.certifiedOrganic}
+                  onChange={handleDemographicsFilters}
+                />
+              }
+              label="Filter to Certified Organic"
             />
-          }
-          label="Filter to Certified Organic"
-        />
-      </FormControl>
-      <FormControl className={classes.formControl}>
-        <FormLabel component="legend">Months</FormLabel>
-        <FormControlLabel
-          control={<Checkbox name="may" value={month.may} />}
-          label="May"
-        />
-        <FormControlLabel control={<Checkbox name="june" />} label="June" />
-        <FormControlLabel control={<Checkbox name="july" />} label="July" />
-        <FormControlLabel control={<Checkbox name="august" />} label="August" />
-        <FormControlLabel
-          control={<Checkbox name="september" />}
-          label="September"
-        />
-      </FormControl>
-      <FormControl component="fieldset">
-        <FormLabel component="legend">Map Display</FormLabel>
-        <FormGroup>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isHeatmap}
-                onChange={() => toggleHeatmap(!isHeatmap)}
-                name="heatmap"
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <FormLabel component="legend">Months</FormLabel>
+            <FormControlLabel
+              control={<Checkbox name="may" value={month.may} />}
+              label="May"
+            />
+            <FormControlLabel control={<Checkbox name="june" />} label="June" />
+            <FormControlLabel control={<Checkbox name="july" />} label="July" />
+            <FormControlLabel
+              control={<Checkbox name="august" />}
+              label="August"
+            />
+            <FormControlLabel
+              control={<Checkbox name="september" />}
+              label="September"
+            />
+          </FormControl>
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Map Display</FormLabel>
+            <FormGroup>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isHeatmap}
+                    onChange={() => toggleHeatmap(!isHeatmap)}
+                    name="heatmap"
+                  />
+                }
+                label="Use Heatmap"
               />
-            }
-            label="Use Heatmap"
-          />
-        </FormGroup>
-      </FormControl>
-    </Paper>
+            </FormGroup>
+          </FormControl>
+          <FormControl component="fieldset">
+            <FormLabel component="legend">Filter Hubs</FormLabel>
+            <InputLabel id="demo-mutiple-chip-label">Filter Hubs</InputLabel>
+            <Select
+              labelId="demo-mutiple-chip-label"
+              id="demo-mutiple-chip"
+              multiple
+              value={selectedHubs}
+              onChange={() => setSelectedHubs}
+              input={<Input id="select-multiple-chip" />}
+              renderValue={(selected) => (
+                <div className={classes.chips}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} className={classes.chip} />
+                  ))}
+                </div>
+              )}
+              MenuProps={MenuProps}
+            >
+              {hubs.map((hub) => (
+                <MenuItem
+                  key={hub}
+                  className={getStyles(hub, selectedHubs, theme)}
+                  value={hub}
+                >
+                  {hub}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Paper>
+      </Grid>
+
+      <Grid className={classes.map} item xs={9}>
+        {children({
+          filteredLocations,
+          isHeatmap,
+          selectedHubs,
+          showPurchases,
+          showDistributions,
+        })}
+      </Grid>
+    </Grid>
   );
 }
