@@ -9,6 +9,8 @@ import FormGroup from "@material-ui/core/FormGroup";
 import FormLabel from "@material-ui/core/FormLabel";
 import Input from "@material-ui/core/Input";
 import InputLabel from "@material-ui/core/InputLabel";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import Radio from "@material-ui/core/Radio";
 import MenuItem from "@material-ui/core/MenuItem";
 import Paper from "@material-ui/core/Paper";
 import Select from "@material-ui/core/Select";
@@ -81,6 +83,7 @@ export default function Filter({
     womanOwned: false,
     certifiedOrganic: false,
   });
+  const [value, handleChange] = useState({});
 
   const [month, setMonth] = useState({
     may: true,
@@ -202,6 +205,26 @@ export default function Filter({
                 }
                 label="Use Heatmap"
               />
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Heatmap Values</FormLabel>
+                <RadioGroup
+                  aria-label="heatmapvalues"
+                  name="heatmap-values"
+                  value={value}
+                  onChange={handleChange}
+                >
+                  <FormControlLabel
+                    value="providers"
+                    control={<Radio />}
+                    label="Funds to Providers"
+                  />
+                  <FormControlLabel
+                    value="distributors"
+                    control={<Radio />}
+                    label="Food to Distributors"
+                  />
+                </RadioGroup>
+              </FormControl>
             </FormGroup>
           </FormControl>
           <FormControl style={{ width: 100 }} component="fieldset">
