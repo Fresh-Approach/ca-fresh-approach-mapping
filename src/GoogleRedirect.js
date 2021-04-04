@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import PropTypes from "prop-types";
 import { Redirect } from "@reach/router";
 import queryString from "query-string";
 
@@ -15,3 +16,8 @@ function GoogleRedirect({ token, setAccessToken }) {
 }
 
 export default GoogleRedirect;
+
+GoogleRedirect.propTypes = {
+  accessToken: PropTypes.string,
+  setAccessToken: PropTypes.func,
+};

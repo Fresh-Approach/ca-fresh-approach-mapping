@@ -125,7 +125,7 @@ const Map = ({ token, removeToken }) => {
                     icon={getMapIcon(item.category)}
                     style={{ border: 0 }}
                   >
-                    <Popup onOpen={() => console.log(item)}>
+                    <Popup onOpen={() => {}}>
                       <strong>Name: </strong>
                       {item.name}
                       <br />
