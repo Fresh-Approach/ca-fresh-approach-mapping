@@ -19,9 +19,7 @@ import Switch from "@material-ui/core/Switch";
 import { makeStyles } from "@material-ui/core/styles";
 import { scaleLinear } from "d3-scale";
 
-import { parsePrice } from "./utils";
-
-const MONTHS = ["May", "June", "July", "August", "September"];
+import { parsePrice, MONTHS } from "./utils";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -126,7 +124,7 @@ export default function Filter({
       }
     }
 
-    return scaleLinear().domain([min, max]).range(["pink", "purple"]);
+    return scaleLinear().domain([min, max]).range(["#00FBF7", "#050767"]);
   }, [purchases]);
 
   return (

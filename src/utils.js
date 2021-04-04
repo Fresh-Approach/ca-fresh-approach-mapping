@@ -30,3 +30,5 @@ export function getMapIcon(locationTypes) {
 export function parsePrice(price) {
   return parseFloat((price || "$0.00").split("$")[1].replace(",", ""));
 }
+
+export const MONTHS = ["May", "June", "July", "August", "September"];

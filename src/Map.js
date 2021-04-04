@@ -13,7 +13,7 @@ import { scaleLinear } from "d3-scale";
 import Nav from "./Nav";
 import Filter from "./Filter";
 import Heatmap from "./Heatmap";
-import { getMapIcon, parsePrice } from "./utils";
+import { getMapIcon, parsePrice, MONTHS } from "./utils";
 import useData from "./use-data";
 
 const useStyles = makeStyles(() => ({
@@ -70,7 +70,12 @@ const Map = ({ token, removeToken }) => {
   const filteredPurchases = useMemo(() => purchases, [purchases]);
 
   function getPurchaseAmount(purchase) {
-    return 800;
+    let total = 0;
+    MONTHS.forEach((month) => {
+      total += parsePrice(purchase[month.toLowerCase()]);
+    });
+
+    return total;
   }
 
   return (
