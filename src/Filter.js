@@ -71,36 +71,11 @@ function filteredTest(record, filters) {
   );
 }
 
-function filterLocations(
-  selectedHubs,
-  providerFilters,
-  distributorFilters,
-  records
-) {
-  return () =>
-    records.filter((record) => {
-      if (record.category && record.category.includes("Hub")) {
-        return filteredHubsTest(selectedHubs, record, "name");
-      }
-
-      if (
-        record.category &&
-        (record.category.includes("Farm") ||
-          record.category.includes("Aggregating Farm"))
-      ) {
-        return filteredTest(record, providerFilters);
-      }
-
-      if (
-        record.category &&
-        (record.category.includes("Distributor") ||
-          record.category.includes("Food Distribution Org"))
-      ) {
-        return filteredTest(record, distributorFilters);
-      }
-
-      return true;
-    });
+function filterIncludes(array, keySet) {
+  if (!array.length) {
+    return true;
+  }
+  return keySet.some((key) => array.includes(key));
 }
 
 export default function Filter({
@@ -114,6 +89,7 @@ export default function Filter({
 
   const [selectedHubs, setSelectedHubs] = useState([]);
   const [selectedContracts, setSelectedContracts] = useState([]);
+  const [selectedLocationTypes, setSelectedLocationTypes] = useState([]);
   const [selectedMonths, setSelectedMonths] = useState(MONTHS);
   const [showPurchases, setShowPurchases] = useState(true);
   const [showDistributions, setShowDistributions] = useState(true);
@@ -130,14 +106,63 @@ export default function Filter({
   });
 
   const filteredLocations = useMemo(
-    filterLocations(
-      selectedHubs,
+    () =>
+      locations.filter((record) => {
+        if (record.category && record.category.includes("Hub")) {
+          return (
+            filterIncludes(selectedLocationTypes, ["Hub"]) &&
+            filteredHubsTest(selectedHubs, record, "name")
+          );
+        }
+
+        if (
+          record.category &&
+          (record.category.includes("Farm") ||
+            record.category.includes("Aggregating Farm"))
+        ) {
+          return (
+            filterIncludes(selectedLocationTypes, [
+              "Farm",
+              "Aggregating Farm",
+            ]) && filteredTest(record, providerFilters)
+          );
+        }
+
+        if (
+          record.category &&
+          (record.category.includes("Distributor") ||
+            record.category.includes("Food Distribution Org"))
+        ) {
+          return (
+            filterIncludes(selectedLocationTypes, [
+              "Distributor",
+              "Food Distribution Org",
+            ]) && filteredTest(record, distributorFilters)
+          );
+        }
+
+        return true;
+      }),
+    [
+      locations,
       providerFilters,
       distributorFilters,
-      locations
-    ),
-    [locations, providerFilters, distributorFilters, selectedHubs]
+      selectedHubs,
+      selectedLocationTypes,
+    ]
   );
+
+  const locationTypes = useMemo(() => {
+    const newTypes = {};
+
+    locations.forEach(({ category }) => {
+      category.forEach((c) => {
+        newTypes[c] = true;
+      });
+    });
+
+    return Object.keys(newTypes);
+  }, [locations]);
 
   const hubs = useMemo(
     () =>
@@ -278,6 +303,32 @@ export default function Filter({
                 <MenuItem key={id} value={name}>
                   <Checkbox checked={selectedHubs.includes(name)} />
                   <ListItemText primary={name} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl component="fieldset" className={classes.formControl}>
+            <InputLabel id="demo-mutiple-chip-label">Filter Types</InputLabel>
+            <Select
+              labelId="demo-mutiple-chip-label"
+              id="demo-mutiple-chip"
+              multiple
+              value={selectedLocationTypes}
+              onChange={(event) => setSelectedLocationTypes(event.target.value)}
+              input={<Input id="select-multiple-chip" />}
+              renderValue={(selected) => (
+                <div className={classes.chips}>
+                  {selected.map((name) => (
+                    <Chip key={name} label={name} className={classes.chip} />
+                  ))}
+                </div>
+              )}
+              MenuProps={MenuProps}
+            >
+              {locationTypes.map((types) => (
+                <MenuItem key={types} value={types}>
+                  <Checkbox checked={selectedLocationTypes.includes(types)} />
+                  <ListItemText primary={types} />
                 </MenuItem>
               ))}
             </Select>
