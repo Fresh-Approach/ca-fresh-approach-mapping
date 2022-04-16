@@ -16,7 +16,7 @@ function parseDistributions(distributionRecords) {
 
     if (
       !distributionHash[dist.hub][dist.distributionSite] &&
-      MONTH_NUMBERS[dist.deliverDate[0]]
+      MONTH_NUMBERS[dist.deliveryDate[0]]
     ) {
       distributionHash[dist.hub][dist.distributionSite] = {
         may: [],
@@ -27,10 +27,10 @@ function parseDistributions(distributionRecords) {
       };
     }
 
-    if (MONTH_NUMBERS[dist.deliverDate[0]]) {
+    if (MONTH_NUMBERS[dist.deliveryDate[0]]) {
       const locationRelationship =
         distributionHash[dist.hub][dist.distributionSite];
-      locationRelationship[MONTH_NUMBERS[dist.deliverDate[0]]].push(dist);
+      locationRelationship[MONTH_NUMBERS[dist.deliveryDate[0]]].push(dist);
 
       locationRelationship.meta = {
         hub: dist.hub,
