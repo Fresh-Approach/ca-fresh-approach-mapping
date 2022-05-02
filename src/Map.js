@@ -115,165 +115,155 @@ function Map({ token, removeToken }) {
               attribution='&copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {isHeatmap ? (
-              <Heatmap
-                locations={locations}
-                purchasesHash={purchasesHash}
-                distributionMinMax={distributionMinMax}
-                purchaseMinMax={purchaseMinMax}
-                selectedHeatmapOption={selectedHeatmapOption}
-              />
-            ) : (
-              <>
-                {filteredLocations.map((location) => {
-                  const aggregatedPurchaseAmount = getAggregatedPurchaseAmount(
-                    location,
-                    purchasesHash,
+            <>
+              {filteredLocations.map((location) => {
+                const aggregatedPurchaseAmount = getAggregatedPurchaseAmount(
+                  location,
+                  purchasesHash,
+                  selectedMonths,
+                  selectedHubs,
+                  availableMonths
+                );
+                const isFarm =
+                  location.category.includes("Farm") ||
+                  location.category.includes("Aggregating Farm");
+                const isDistributionSite = location.category.includes(
+                  "Food Distribution Org"
+                );
+                const { locationBoxes, locationPoundage } =
+                  getTotalLocationPoundage(
+                    location.name,
+                    distributionsHash,
                     selectedMonths,
                     selectedHubs,
                     availableMonths
                   );
-                  const isFarm =
-                    location.category.includes("Farm") ||
-                    location.category.includes("Aggregating Farm");
-                  const isDistributionSite = location.category.includes(
-                    "Food Distribution Org"
-                  );
-                  const { locationBoxes, locationPoundage } =
-                    getTotalLocationPoundage(
-                      location.name,
-                      distributionsHash,
-                      selectedMonths,
-                      selectedHubs,
-                      availableMonths
-                    );
 
-                  if (aggregatedPurchaseAmount === "0.00" && isFarm) {
-                    return null;
-                  }
+                if (aggregatedPurchaseAmount === "0.00" && isFarm) {
+                  return null;
+                }
 
-                  if (locationPoundage === 0 && isDistributionSite) {
-                    return null;
-                  }
+                if (locationPoundage === 0 && isDistributionSite) {
+                  return null;
+                }
 
-                  return (
-                    <Marker
-                      key={location.id}
-                      className={classes.icon}
-                      position={location.geocode}
-                      icon={getMapIcon(location.category)}
-                      style={{ border: 0 }}
-                    >
-                      <Popup>
-                        <div style={{ display: "flex" }}>
-                          {location.locationImage && (
-                            <div style={{ width: 120, paddingRight: 30 }}>
-                              <img
-                                style={{ width: "100%" }}
-                                src={location.locationImage}
-                                alt=""
-                              />
-                            </div>
-                          )}
-                          <div>
-                            <strong>Name: </strong>
-                            {location.name}
-                            <br />
-                            {location.description && (
-                              <>
-                                <strong>Description: </strong>
-                                <span>{location.description}</span>
-                                <br />
-                              </>
-                            )}
-                            <strong>Address: </strong>
-                            {location.address}
-                            <br />
-                            <strong>Category: </strong>
-                            {location.category.join(", ")}
-                            <br />
-                            {isFarm && Object.keys(purchasesHash).length && (
-                              <>
-                                <strong>Total Purchase Amount: </strong>
-                                <span>{`$${aggregatedPurchaseAmount}`}</span>
-                              </>
-                            )}
-                            {isDistributionSite &&
-                              Object.keys(distributionsHash).length && (
-                                <>
-                                  <strong>Total Food Poundage: </strong>
-                                  <span>{locationPoundage}</span>
-                                  <br />
-                                  <strong>Total Boxes: </strong>
-                                  <span>{locationBoxes}</span>
-                                </>
-                              )}
+                return (
+                  <Marker
+                    key={location.id}
+                    className={classes.icon}
+                    position={location.geocode}
+                    icon={getMapIcon(location.category)}
+                    style={{ border: 0 }}
+                  >
+                    <Popup>
+                      <div style={{ display: "flex" }}>
+                        {location.locationImage && (
+                          <div style={{ width: 120, paddingRight: 30 }}>
+                            <img
+                              style={{ width: "100%" }}
+                              src={location.locationImage}
+                              alt=""
+                            />
                           </div>
+                        )}
+                        <div>
+                          <strong>Name: </strong>
+                          {location.name}
+                          <br />
+                          {location.description && (
+                            <>
+                              <strong>Description: </strong>
+                              <span>{location.description}</span>
+                              <br />
+                            </>
+                          )}
+                          <strong>Address: </strong>
+                          {location.address}
+                          <br />
+                          <strong>Category: </strong>
+                          {location.category.join(", ")}
+                          <br />
+                          {isFarm && Object.keys(purchasesHash).length && (
+                            <>
+                              <strong>Total Purchase Amount: </strong>
+                              <span>{`$${aggregatedPurchaseAmount}`}</span>
+                            </>
+                          )}
+                          {isDistributionSite &&
+                            Object.keys(distributionsHash).length && (
+                              <>
+                                <strong>Total Food Poundage: </strong>
+                                <span>{locationPoundage}</span>
+                                <br />
+                                <strong>Total Boxes: </strong>
+                                <span>{locationBoxes}</span>
+                              </>
+                            )}
                         </div>
-                      </Popup>
-                    </Marker>
-                  );
-                })}
-                {showDistributions &&
-                  filteredDistributions.map((distribution) => (
-                    <Polyline
-                      key={distribution.id}
-                      positions={[
-                        distribution.hubGeo,
-                        distribution.distributionSiteGeo,
-                      ]}
-                      pathOptions={{
-                        color: distributionGradient(
-                          getDistributionAmount(
-                            distribution,
-                            selectedMonths,
-                            "totalPounds",
-                            availableMonths
-                          )
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+              {showDistributions &&
+                filteredDistributions.map((distribution, index) => (
+                  <Polyline
+                    key={"distribution-" + index}
+                    positions={[
+                      distribution.hubGeo,
+                      distribution.distributionSiteGeo,
+                    ]}
+                    pathOptions={{
+                      color: distributionGradient(
+                        getDistributionAmount(
+                          distribution,
+                          selectedMonths,
+                          "totalPounds",
+                          availableMonths
+                        )
+                      ),
+                      weight: getLineWidth(
+                        getDistributionAmount(
+                          distribution,
+                          selectedMonths,
+                          "totalPounds",
+                          availableMonths
                         ),
-                        weight: getLineWidth(
-                          getDistributionAmount(
-                            distribution,
-                            selectedMonths,
-                            "totalPounds",
-                            availableMonths
-                          ),
-                          distributionMinMax
+                        distributionMinMax
+                      ),
+                    }}
+                  />
+                ))}
+              {showPurchases &&
+                filteredPurchases.map((purchase, index) => (
+                  <Polyline
+                    key={"purchase-" + index}
+                    positions={[
+                      purchase.hubOrganizationGeo,
+                      purchase.farmNameGeo,
+                    ]}
+                    pathOptions={{
+                      color: purchaseGradient(
+                        getPurchaseAmount(
+                          purchase,
+                          selectedMonths,
+                          selectedHubs,
+                          availableMonths
+                        )
+                      ),
+                      weight: getLineWidth(
+                        getPurchaseAmount(
+                          purchase,
+                          selectedMonths,
+                          selectedHubs,
+                          availableMonths
                         ),
-                      }}
-                    />
-                  ))}
-                {showPurchases &&
-                  filteredPurchases.map((purchase) => (
-                    <Polyline
-                      key={purchases.id}
-                      positions={[
-                        purchase.hubOrganizationGeo,
-                        purchase.farmNameGeo,
-                      ]}
-                      pathOptions={{
-                        color: purchaseGradient(
-                          getPurchaseAmount(
-                            purchase,
-                            selectedMonths,
-                            selectedHubs,
-                            availableMonths
-                          )
-                        ),
-                        weight: getLineWidth(
-                          getPurchaseAmount(
-                            purchase,
-                            selectedMonths,
-                            selectedHubs,
-                            availableMonths
-                          ),
-                          purchaseMinMax
-                        ),
-                      }}
-                    />
-                  ))}
-              </>
-            )}
+                        purchaseMinMax
+                      ),
+                    }}
+                  />
+                ))}
+            </>
           </MapContainer>
         )}
       </Filter>
