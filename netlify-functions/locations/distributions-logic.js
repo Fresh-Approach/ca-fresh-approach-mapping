@@ -1,36 +1,27 @@
-const MONTH_NUMBERS = {
-  5: "may",
-  6: "june",
-  7: "july",
-  8: "august",
-  9: "september",
-};
-
 function parseDistributions(distributionRecords) {
   const distributionHash = {};
 
   distributionRecords.forEach((dist) => {
+    const date = new Date(dist.deliveryDate);
+    const formattedDate = `${date.getFullYear()}-${date.getMonth() + 1}`;
+
     if (!distributionHash[dist.hub]) {
       distributionHash[dist.hub] = {};
     }
 
-    if (
-      !distributionHash[dist.hub][dist.distributionSite] &&
-      MONTH_NUMBERS[dist.deliveryDate[0]]
-    ) {
-      distributionHash[dist.hub][dist.distributionSite] = {
-        may: [],
-        june: [],
-        july: [],
-        august: [],
-        september: [],
-      };
+    if (!distributionHash[dist.hub][dist.distributionSite]) {
+      distributionHash[dist.hub][dist.distributionSite] = {};
     }
 
-    if (MONTH_NUMBERS[dist.deliveryDate[0]]) {
+    if (formattedDate) {
       const locationRelationship =
         distributionHash[dist.hub][dist.distributionSite];
-      locationRelationship[MONTH_NUMBERS[dist.deliveryDate[0]]].push(dist);
+
+      if (locationRelationship[formattedDate]) {
+        locationRelationship[formattedDate].push(dist);
+      } else {
+        locationRelationship[formattedDate] = [dist];
+      }
 
       locationRelationship.meta = {
         hub: dist.hub,
@@ -53,7 +44,7 @@ function parseDistributions(distributionRecords) {
     Object.values(distributionSites).forEach(({ meta, ...months }) => {
       parsedRecords.push({
         ...meta,
-        ...months,
+        months,
       });
     });
   });

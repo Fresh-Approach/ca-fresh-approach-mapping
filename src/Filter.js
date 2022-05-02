@@ -17,7 +17,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { scaleLinear } from "d3-scale";
 
 import Legend from "./Legend";
-import { parsePrice, MONTHS, getDistributionAmount } from "./utils";
+import { parsePrice, getDistributionAmount, getDate } from "./utils";
 
 const PURCHASE_GRADIENT = ["#a7c0d4", "#0076d6"];
 const DISTRIBUTION_GRADIENT = ["#f7caa6", "#fc7405"];
@@ -79,6 +79,7 @@ function filterIncludes(array, keySet) {
 }
 
 export default function Filter({
+  availableMonths,
   locations,
   contracts,
   distributions,
@@ -90,7 +91,7 @@ export default function Filter({
   const [selectedHubs, setSelectedHubs] = useState([]);
   const [selectedContracts, setSelectedContracts] = useState([]);
   const [selectedLocationTypes, setSelectedLocationTypes] = useState([]);
-  const [selectedMonths, setSelectedMonths] = useState(MONTHS);
+  const [selectedMonths, setSelectedMonths] = useState([]);
   const [showPurchases, setShowPurchases] = useState(true);
   const [showDistributions, setShowDistributions] = useState(true);
 
@@ -205,7 +206,7 @@ export default function Filter({
     for (let i = 0; i < filteredPurchases.length; i += 1) {
       let month = 0;
 
-      MONTHS.forEach((monthValue) => {
+      availableMonths.forEach((monthValue) => {
         const monthPrice = parsePrice(
           filteredPurchases[i][monthValue.toLowerCase()]
         );
@@ -225,7 +226,7 @@ export default function Filter({
     }
 
     return [min || 0, max || 0];
-  }, [filteredPurchases, selectedMonths]);
+  }, [filteredPurchases, selectedMonths, availableMonths]);
 
   const purchaseGradient = useMemo(
     // #4897D8 is the base color.
@@ -252,7 +253,8 @@ export default function Filter({
       const distributionAmount = getDistributionAmount(
         distribution,
         selectedMonths,
-        "totalPounds"
+        "totalPounds",
+        availableMonths
       );
 
       if (min === null || distributionAmount < min) {
@@ -265,7 +267,7 @@ export default function Filter({
     }
 
     return [min || 0, max || 0];
-  }, [filteredDistributions, selectedMonths]);
+  }, [filteredDistributions, selectedMonths, availableMonths]);
 
   const distributionGradient = useMemo(
     () => scaleLinear().domain(distributionMinMax).range(DISTRIBUTION_GRADIENT),
@@ -461,12 +463,14 @@ export default function Filter({
               )}
               MenuProps={MenuProps}
             >
-              {MONTHS.map((month) => (
-                <MenuItem key={month} value={month}>
-                  <Checkbox checked={selectedMonths.includes(month)} />
-                  <ListItemText primary={month} />
-                </MenuItem>
-              ))}
+              {availableMonths
+                .sort((a, b) => (getDate(a) > getDate(b) ? 1 : -1))
+                .map((month) => (
+                  <MenuItem key={month} value={month}>
+                    <Checkbox checked={selectedMonths.includes(month)} />
+                    <ListItemText primary={month} />
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
 
@@ -514,6 +518,7 @@ export default function Filter({
 }
 
 Filter.propTypes = {
+  availableMonths: PropTypes.arrayOf(PropTypes.string).isRequired,
   locations: PropTypes.arrayOf(PropTypes.object).isRequired,
   contracts: PropTypes.arrayOf(PropTypes.object).isRequired,
   children: PropTypes.func.isRequired,

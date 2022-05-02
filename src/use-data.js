@@ -7,6 +7,7 @@ export default function useData({ token, removeToken }) {
   const [distributions, setDistributions] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [contracts, setContracts] = useState([]);
+  const [availableMonths, setAvailableMonths] = useState([]);
 
   const fetchData = useCallback(async () => {
     const {
@@ -14,6 +15,7 @@ export default function useData({ token, removeToken }) {
       locations: newLocations,
       distributions: newDistributions,
       purchases: newPurchases,
+      availableMonths: newAvailableMonths,
       error,
     } = await fetch(URL, {
       headers: { Authorization: token },
@@ -27,6 +29,7 @@ export default function useData({ token, removeToken }) {
     setLocations(newLocations);
     setDistributions(newDistributions);
     setPurchases(newPurchases);
+    setAvailableMonths(newAvailableMonths);
 
     return null;
   }, [token, removeToken]);
@@ -40,5 +43,6 @@ export default function useData({ token, removeToken }) {
     contracts,
     locations,
     purchases,
+    availableMonths,
   };
 }
