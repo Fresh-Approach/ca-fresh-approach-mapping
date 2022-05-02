@@ -10,7 +10,9 @@ const LOCATION_COLORS = {
   Distributor: "#FF0000",
 };
 
-export const MONTHS = ["May", "June", "July", "August", "September"];
+export function getDate(key) {
+  return new Date(...key.split("-"));
+}
 
 /**
  * Creates SVG Map Icons for leaflet consumption
@@ -71,11 +73,20 @@ function sumDistributionMonth(monthDistributionList, key) {
  *
  * @return  {Integer}                 Total amount for a specific distribution location.
  */
-export function getDistributionAmount(distribution, selectedMonths, key) {
-  return MONTHS.reduce((total, month) => {
-    if (selectedMonths.includes(month)) {
+export function getDistributionAmount(
+  distribution,
+  selectedMonths,
+  key,
+  availableMonths = []
+) {
+  return availableMonths.reduce((total, month) => {
+    if (!selectedMonths.length || selectedMonths.includes(month)) {
       return (
-        total + sumDistributionMonth(distribution[month.toLowerCase()], key)
+        total +
+        sumDistributionMonth(
+          distribution.months[month.toLowerCase()] || [],
+          key
+        )
       );
     }
 
@@ -92,33 +103,51 @@ export function getDistributionAmount(distribution, selectedMonths, key) {
  *
  * @return  {Integer}                           Total purchases for one hub to one farm.
  */
-export function getPurchaseAmount(purchase, selectedMonths, selectedHubs = []) {
+export function getPurchaseAmount(
+  purchase,
+  selectedMonths,
+  selectedHubs = [],
+  availableMonths = []
+) {
   if (selectedHubs.length && !selectedHubs.includes(purchase.hubOrganization)) {
     return 0;
   }
 
-  return MONTHS.reduce((total, month) => {
-    if (selectedMonths.includes(month)) {
-      return total + parsePrice(purchase[month.toLowerCase()]);
+  const purchaseAmount = availableMonths.reduce((total, month) => {
+    if (
+      !selectedMonths.length ||
+      (selectedMonths.includes(month) && purchase.months[month])
+    ) {
+      // This is a hack for the dirty months that needs to be cleaned up.
+      if (purchase.months[month] === "USDA") {
+        return total;
+      }
+
+      return total + parsePrice(purchase.months[month]);
     }
 
     return total;
   }, 0);
+
+  return purchaseAmount;
 }
 
 export function getAggregatedPurchaseAmount(
   item,
   purchasesHash,
   selectedMonths,
-  selectedHubs
+  selectedHubs,
+  availableMonths
 ) {
   const itemPurchaseList = purchasesHash[item.name] || [];
 
-  const totalPurchases = itemPurchaseList.reduce(
-    (total, purchase) =>
-      total + getPurchaseAmount(purchase, selectedMonths, selectedHubs),
-    0
-  );
+  // eslint-disable-next-line arrow-body-style
+  const totalPurchases = itemPurchaseList.reduce((total, purchase) => {
+    return (
+      total +
+      getPurchaseAmount(purchase, selectedMonths, selectedHubs, availableMonths)
+    );
+  }, 0);
 
   return totalPurchases.toFixed(2);
 }
@@ -149,7 +178,8 @@ export function getTotalLocationPoundage(
   name,
   hash,
   selectedMonths,
-  selectedHubs
+  selectedHubs,
+  availableMonths
 ) {
   const site = hash[name] || [];
 
@@ -159,10 +189,20 @@ export function getTotalLocationPoundage(
         return {
           locationPoundage:
             locationPoundage +
-            getDistributionAmount(entry, selectedMonths, "totalPounds"),
+            getDistributionAmount(
+              entry,
+              selectedMonths,
+              "totalPounds",
+              availableMonths
+            ),
           locationBoxes:
             locationBoxes +
-            getDistributionAmount(entry, selectedMonths, "boxes"),
+            getDistributionAmount(
+              entry,
+              selectedMonths,
+              "boxes",
+              availableMonths
+            ),
         };
       }
 

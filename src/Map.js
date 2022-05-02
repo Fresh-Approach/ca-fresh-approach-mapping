@@ -49,13 +49,14 @@ const useStyles = makeStyles(() => ({
 
 const position = [37.77191462466318, -122.4291251170002];
 
-const Map = ({ token, removeToken }) => {
+function Map({ token, removeToken }) {
   const classes = useStyles();
 
-  const { locations, distributions, purchases, contracts } = useData({
-    token,
-    removeToken,
-  });
+  const { locations, distributions, purchases, contracts, availableMonths } =
+    useData({
+      token,
+      removeToken,
+    });
 
   const purchasesHash = useMemo(() => {
     const hash = {};
@@ -87,6 +88,7 @@ const Map = ({ token, removeToken }) => {
     <div>
       <Nav removeToken={removeToken} />
       <Filter
+        availableMonths={availableMonths}
         locations={locations}
         contracts={contracts}
         distributions={distributions}
@@ -128,7 +130,8 @@ const Map = ({ token, removeToken }) => {
                     location,
                     purchasesHash,
                     selectedMonths,
-                    selectedHubs
+                    selectedHubs,
+                    availableMonths
                   );
                   const isFarm =
                     location.category.includes("Farm") ||
@@ -136,15 +139,14 @@ const Map = ({ token, removeToken }) => {
                   const isDistributionSite = location.category.includes(
                     "Food Distribution Org"
                   );
-                  const {
-                    locationBoxes,
-                    locationPoundage,
-                  } = getTotalLocationPoundage(
-                    location.name,
-                    distributionsHash,
-                    selectedMonths,
-                    selectedHubs
-                  );
+                  const { locationBoxes, locationPoundage } =
+                    getTotalLocationPoundage(
+                      location.name,
+                      distributionsHash,
+                      selectedMonths,
+                      selectedHubs,
+                      availableMonths
+                    );
 
                   if (aggregatedPurchaseAmount === "0.00" && isFarm) {
                     return null;
@@ -162,7 +164,7 @@ const Map = ({ token, removeToken }) => {
                       icon={getMapIcon(location.category)}
                       style={{ border: 0 }}
                     >
-                      <Popup onOpen={() => console.log(location)}>
+                      <Popup>
                         <div style={{ display: "flex" }}>
                           {location.locationImage && (
                             <div style={{ width: 120, paddingRight: 30 }}>
@@ -225,14 +227,16 @@ const Map = ({ token, removeToken }) => {
                           getDistributionAmount(
                             distribution,
                             selectedMonths,
-                            "totalPounds"
+                            "totalPounds",
+                            availableMonths
                           )
                         ),
                         weight: getLineWidth(
                           getDistributionAmount(
                             distribution,
                             selectedMonths,
-                            "totalPounds"
+                            "totalPounds",
+                            availableMonths
                           ),
                           distributionMinMax
                         ),
@@ -249,10 +253,20 @@ const Map = ({ token, removeToken }) => {
                       ]}
                       pathOptions={{
                         color: purchaseGradient(
-                          getPurchaseAmount(purchase, selectedMonths)
+                          getPurchaseAmount(
+                            purchase,
+                            selectedMonths,
+                            selectedHubs,
+                            availableMonths
+                          )
                         ),
                         weight: getLineWidth(
-                          getPurchaseAmount(purchase, selectedMonths),
+                          getPurchaseAmount(
+                            purchase,
+                            selectedMonths,
+                            selectedHubs,
+                            availableMonths
+                          ),
                           purchaseMinMax
                         ),
                       }}
@@ -265,7 +279,7 @@ const Map = ({ token, removeToken }) => {
       </Filter>
     </div>
   );
-};
+}
 
 Map.propTypes = {
   token: Proptypes.string.isRequired,

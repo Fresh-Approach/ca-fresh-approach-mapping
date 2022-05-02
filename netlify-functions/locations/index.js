@@ -71,6 +71,45 @@ function mapSheetsResponse([columns, ...values]) {
   return resultList;
 }
 
+function getAvailableMonths(purchaseMonths, distributionMonths) {
+  const availableMonths = new Set();
+
+  purchaseMonths.forEach(({ months }) => {
+    Object.keys(months).forEach((month) => {
+      availableMonths.add(month);
+    });
+  });
+
+  distributionMonths.forEach(({ months }) => {
+    Object.keys(months).forEach((month) => {
+      availableMonths.add(month);
+    });
+  });
+
+  return Array.from(availableMonths);
+}
+
+function findDatesFromColumns(purchase) {
+  const months = {};
+
+  Object.entries(purchase).forEach(([key, value]) => {
+    const potentialYear = key.slice(0, 4);
+    const potentialMonth = key.slice(4);
+    const parsedDate = new Date(potentialYear, potentialMonth);
+
+    if (Object.prototype.toString.call(parsedDate) === "[object Date]") {
+      if (
+        !Number.isNaN(parsedDate, 10) &&
+        !Number.isNaN(parseInt(potentialYear, 10))
+      ) {
+        months[`${potentialYear}-${potentialMonth}`] = value;
+      }
+    }
+  });
+
+  return months;
+}
+
 function matchDistributionNames(distributions, locationHash) {
   return distributions
     .filter(
@@ -113,6 +152,7 @@ function matchPurchasesNames(purchases, locationHash) {
       certifiedOrganic: get(locationHash[farmName], "certifiedOrganic"),
       hubOrganization,
       farmName,
+      months: findDatesFromColumns(rest),
       ...rest,
     }));
 }
@@ -148,6 +188,8 @@ exports.handler = async function handler(event) {
     parsedLocationHash
   );
 
+  const availableMonths = getAvailableMonths(newPurchases, newDistributions);
+
   return {
     statusCode: 200,
     body: JSON.stringify({
@@ -157,6 +199,7 @@ exports.handler = async function handler(event) {
       contracts: Array.from(
         new Set(newPurchases.map(({ contract }) => contract))
       ),
+      availableMonths,
     }),
   };
 };
